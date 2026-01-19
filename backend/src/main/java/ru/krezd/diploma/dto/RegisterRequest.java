@@ -15,7 +15,7 @@ public class RegisterRequest
     private String username;
 
     @NotBlank(message = "Password не может быть пустым")
-    @Size(min = 6, message = "Password должен быть минимум 6 символов")
+    @Size(min = 1, message = "Password должен быть минимум 6 символов")
     private String password;
 
     private String name;

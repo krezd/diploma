@@ -79,7 +79,6 @@ public class SecurityConfig
         
         // Разрешенные источники (origins)
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8080",
                 "http://localhost:3000",  // Vite dev server
                 "http://localhost:5173"   // Альтернативный порт Vite
         ));
