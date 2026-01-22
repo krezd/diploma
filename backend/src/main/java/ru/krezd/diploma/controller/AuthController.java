@@ -36,32 +36,20 @@ public class AuthController
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
 
-    /**
-     * POST /api/auth/register
-     * Регистрация нового пользователя
-     * 
-     * @param registerRequest DTO с username, password и name
-     * @return AuthResponse с accessToken и refreshToken
-     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest)
     {
         try
         {
-            // Создаем нового пользователя
             User user = userService.createUser(
                     registerRequest.getUsername(),
                     passwordEncoder.encode(registerRequest.getPassword()),
                     registerRequest.getName()
             );
 
-            // Генерируем access token
             String accessToken = jwtService.generateToken(user.getUsername());
-
-            // Создаем refresh token
             RefreshToken refreshToken = refreshTokenService.createOrUpdateToken(user);
 
-            // Формируем ответ
             AuthResponse response = AuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken.getToken())
@@ -71,7 +59,6 @@ public class AuthController
         }
         catch (IllegalArgumentException ex)
         {
-            // Пользователь уже существует
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ex.getMessage());
         }
@@ -82,13 +69,6 @@ public class AuthController
         }
     }
 
-    /**
-     * POST /api/auth/login
-     * Вход пользователя по username и password
-     * 
-     * @param loginRequest DTO с username и password
-     * @return AuthResponse с accessToken и refreshToken
-     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest)
     {
@@ -100,19 +80,13 @@ public class AuthController
                             loginRequest.getPassword()
                     )
             );
-
-            // Получаем пользователя
             UserDetails userDetails = userService.loadUserByUsername(loginRequest.getUsername());
             User user = userService.findByUsername(loginRequest.getUsername())
                     .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-            // Генерируем access token
             String accessToken = jwtService.generateToken(userDetails.getUsername());
-
-            // Создаем или обновляем refresh token
             RefreshToken refreshToken = refreshTokenService.createOrUpdateToken(user);
 
-            // Формируем ответ
             AuthResponse response = AuthResponse.builder()
                     .accessToken(accessToken)
                     .refreshToken(refreshToken.getToken())
@@ -132,13 +106,6 @@ public class AuthController
         }
     }
 
-    /**
-     * POST /api/auth/refresh
-     * Обновление access token по refresh token
-     * 
-     * @param refreshRequest DTO с refreshToken
-     * @return AuthResponse с новым accessToken и refreshToken
-     */
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@Valid @RequestBody RefreshRequest refreshRequest)
     {
@@ -146,14 +113,12 @@ public class AuthController
         {
             String refreshTokenValue = refreshRequest.getRefreshToken();
 
-            // Проверяем валидность refresh token
             if (!refreshTokenService.validateToken(refreshTokenValue))
             {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body("Refresh token невалиден или истек");
             }
 
-            // Находим refresh token в БД
             Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByToken(refreshTokenValue);
             if (tokenOpt.isEmpty())
             {
@@ -164,13 +129,9 @@ public class AuthController
             RefreshToken refreshToken = tokenOpt.get();
             User user = refreshToken.getUser();
 
-            // Генерируем новый access token
             String newAccessToken = jwtService.generateToken(user.getUsername());
-
-            // Обновляем refresh token (создаем новый)
             RefreshToken newRefreshToken = refreshTokenService.createOrUpdateToken(user);
 
-            // Формируем ответ
             AuthResponse response = AuthResponse.builder()
                     .accessToken(newAccessToken)
                     .refreshToken(newRefreshToken.getToken())
@@ -185,13 +146,6 @@ public class AuthController
         }
     }
 
-    /**
-     * POST /api/auth/logout
-     * Выход пользователя - отзыв refresh token
-     * 
-     * @param refreshRequest DTO с refreshToken
-     * @return Сообщение об успешном выходе
-     */
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@Valid @RequestBody RefreshRequest refreshRequest)
     {

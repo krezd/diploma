@@ -1,6 +1,7 @@
 package ru.krezd.diploma.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.time.OffsetDateTime;
@@ -18,6 +19,7 @@ public class User
     private Long id;
 
     @Column(unique = true, nullable = false, length = 50)
+    @Pattern(regexp = "^[a-zA-Z0-9]([._-](?![._-])|[a-zA-Z0-9]){3,48}[a-zA-Z0-9]$")
     private String username;
 
     @Column(nullable = false, length = 255)

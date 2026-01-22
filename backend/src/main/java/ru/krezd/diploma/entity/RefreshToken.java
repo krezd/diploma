@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "refresh_tokens")
@@ -23,7 +24,7 @@ public class RefreshToken
     @Column(nullable = false, unique = true)
     private String token;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -32,4 +33,12 @@ public class RefreshToken
 
     @Column(nullable = false)
     private boolean isAlive = true;
+
+    private OffsetDateTime updatedAt;
+
+    @PreUpdate
+    protected void onUpdate()
+    {
+        updatedAt = OffsetDateTime.now();
+    }
 }

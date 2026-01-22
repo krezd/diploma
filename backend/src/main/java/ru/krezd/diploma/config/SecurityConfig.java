@@ -17,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import ru.krezd.diploma.security.JwtAuthenticationEntryPoint;
 import ru.krezd.diploma.service.UserService;
 
 import java.util.Arrays;
@@ -30,6 +31,7 @@ public class SecurityConfig
 {
     private final UserService userService;
     private final JwtRequestFilter jwtRequestFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,6 +48,7 @@ public class SecurityConfig
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
                 .authenticationProvider(daoAuthenticationProvider());
 
@@ -76,14 +79,15 @@ public class SecurityConfig
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:*", "http://192.168.*"));
+
         // Разрешенные источники (origins)
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // Vite dev server
-                "http://localhost:5173"   // Альтернативный порт Vite
-        ));
+//        configuration.setAllowedOrigins(Arrays.asList(
+//                "http://localhost:3000",  // Vite dev server
+//                "http://localhost:5173"   // Альтернативный порт Vite
+//        ));
         
-        // Разрешенные HTTP методы
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         
         // Разрешенные заголовки
@@ -96,8 +100,9 @@ public class SecurityConfig
         configuration.setMaxAge(3600L);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", configuration);
-        
+//        source.registerCorsConfiguration("/api/**", configuration);
+        source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
 }

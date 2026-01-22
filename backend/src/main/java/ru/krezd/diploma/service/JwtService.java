@@ -20,13 +20,6 @@ public class JwtService
     @Value("${jwt.accessTtl}")
     private long accessTtlSeconds;
 
-    /**
-     * Генерирует access JWT для пользователя.
-     *
-     * subject = username
-     * iat = текущее время
-     * exp = текущее время + accessTtlSeconds
-     */
     public String generateToken(String username)
     {
         Instant now = Instant.now();
@@ -38,19 +31,11 @@ public class JwtService
                 .sign(getAlgorithm());
     }
 
-    /**
-     * Возвращает username (subject) из токена.
-     * Если токен невалиден, бросает JWTVerificationException.
-     */
     public String getUsername(String token)
     {
-        return decode(token).getSubject();
+        return JWT.decode(token).getSubject();
     }
 
-    /**
-     * Проверяет, истёк ли токен (или невалиден).
-     * При любой ошибке верификации считается, что токен "просрочен/невалиден".
-     */
     public boolean isTokenExpired(String token)
     {
         try
@@ -66,11 +51,6 @@ public class JwtService
         }
     }
 
-    /**
-     * Полная проверка токена:
-     * - подпись и алгоритм
-     * - срок действия (exp)
-     */
     public boolean validateToken(String token)
     {
         try
