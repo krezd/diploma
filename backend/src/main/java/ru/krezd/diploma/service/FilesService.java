@@ -2,7 +2,14 @@ package ru.krezd.diploma.service;
 
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.krezd.diploma.dto.FileInfoResponse;
 
@@ -13,6 +20,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,17 +33,18 @@ public class FilesService
     @Value("${root.path}")
     private Path rootPath;
 
-    public List<FileInfoResponse> getListFiles(Path path) throws IOException
+    public List<FileInfoResponse> getListFiles(String path) throws IOException
     {
+        Path targetPath = validatePath(path);
+        validateDir(targetPath.toString());
         List<FileInfoResponse> result = new ArrayList<>();
 
-        try (var stream = Files.list(path))
+        try (var stream = Files.list(targetPath))
         {
             for (Path file : stream.toList())
             {
 
                 Path relativePath = rootPath.relativize(file);
-
                 FileInfoResponse.FileInfoResponseBuilder builder =
                         FileInfoResponse.builder()
                                 .fileName(file.getFileName().toString())
@@ -57,13 +66,17 @@ public class FilesService
                             .fileType("FILE")
                             .fileSize(Files.size(file));
                 }
-
                 result.add(builder.build());
             }
         }
         return result;
     }
 
+    public List<FileInfoResponse> getUserListFiles(String path, String username) throws IOException
+    {
+        Path targetPath = validateUserPath(path, username);
+        return getListFiles(path);
+    }
 
     private void deleteRecursively(Path root) throws IOException
     {
@@ -222,5 +235,26 @@ public class FilesService
         Path targetDir = rootPath.resolve(username).normalize();
         Files.createDirectories(targetDir);
     }
+
+    public void uploadFile(MultipartFile file, String path,
+                           String username) throws IOException
+    {
+        if (file == null || file.isEmpty())
+        {
+            throw new IllegalArgumentException("File is null or empty");
+        }
+
+        Path targetDir = validateDir(path);
+        Path targetFile = validateUserPath(targetDir.resolve(file.getOriginalFilename()).normalize().toString(), username);
+
+        try (var inputStream = file.getInputStream())
+        {
+            Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e)
+        {
+            throw new IOException("Error while uploading file", e);
+        }
+    }
+
 
 }

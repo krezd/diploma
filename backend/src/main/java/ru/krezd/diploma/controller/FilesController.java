@@ -26,7 +26,7 @@ public class FilesController
     // 3. Выгрузка файла - DONE
     // 4. Контроль над пользователем (не давать просматривать чужие файлы, загружать только в свою директорию, скачивать только свои файлы и т.п.) - DONE 50/50 костыли
     // 5. Реализовать создание рабочей папки пользователя при регистрации - DONE
-    // 6. Удаление файлов/папок
+    // 6. Удаление файлов/папок - DONE
     // 7. Создание папок пользователями - DONE
 
     @Value("${root.path}")
@@ -39,83 +39,27 @@ public class FilesController
     @GetMapping("/list")
     public ResponseEntity<?> getListFiles(@RequestParam String path) throws IOException
     {
-        Path newPath = rootPath.resolve(path).normalize();
-
-        if (!newPath.startsWith(rootPath))
-        {
-            return ResponseEntity.status(403).build();
-        }
-
-        if (!Files.exists(newPath) || !Files.isDirectory(newPath))
-        {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok().body(filesService.getListFiles(newPath));
+        return ResponseEntity.ok().body(filesService.getListFiles(path));
     }
 
-    @GetMapping("/user/list")
+    @GetMapping("/list/user")
     public ResponseEntity<?> getMyListFiles(@RequestParam String path, @AuthenticationPrincipal UserDetails userDetails) throws IOException
     {
         String username = userDetails.getUsername();
-
-        Path checkPath = rootPath.resolve(username).normalize();
-
-        Path newPath = rootPath.resolve(path).normalize();
-
-        if (!newPath.startsWith(rootPath) || !newPath.startsWith(checkPath))
-        {
-            return ResponseEntity.status(403).build();
-        }
-
-        if (!Files.exists(newPath) || !Files.isDirectory(newPath))
-        {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok().body(filesService.getListFiles(newPath));
+        return ResponseEntity.ok().body(filesService.getUserListFiles(path, username));
     }
 
-    @PostMapping(value = "/user/upload",
+    @PostMapping(value = "/upload/user",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadFile(
             @RequestParam("file") MultipartFile file, @RequestParam(required = false, defaultValue = "") String path,
             @AuthenticationPrincipal UserDetails userDetails) throws IOException
     {
-
-        if (file.isEmpty())
-        {
-            return ResponseEntity.badRequest().body("File is empty");
-        }
-
-        String username = userDetails.getUsername();
-        Path checkPath = rootPath.resolve(username).normalize();
-        Path targetDir = rootPath.resolve(path).normalize();
-
-        if (!targetDir.startsWith(rootPath) || !targetDir.startsWith(checkPath))
-        {
-            return ResponseEntity.status(403).build();
-        }
-
-        if (!Files.exists(targetDir) || !Files.isDirectory(targetDir))
-        {
-            return ResponseEntity.notFound().build();
-        }
-        Path targetFile = targetDir.resolve(file.getOriginalFilename()).normalize();
-
-        if (!targetFile.startsWith(rootPath))
-        {
-            return ResponseEntity.status(403).build();
-        }
-        try (var inputStream = file.getInputStream())
-        {
-            Files.copy(inputStream, targetFile, StandardCopyOption.REPLACE_EXISTING);
-        }
-
+        filesService.uploadFile(file, path, userDetails.getUsername());
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/user/createDir")
+    @PostMapping("/createDir/user")
     public ResponseEntity<?> createDir(
             @RequestParam("path") String path,
             @AuthenticationPrincipal UserDetails userDetails) throws IOException
@@ -132,7 +76,7 @@ public class FilesController
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/user/download")
+    @GetMapping("/download/user")
     public ResponseEntity<StreamingResponseBody> download(
             @RequestParam("path") String path,
             @AuthenticationPrincipal UserDetails userDetails
@@ -146,7 +90,7 @@ public class FilesController
                 .body(filesService.downloadByUser(path, userDetails.getUsername()));
     }
 
-    @GetMapping("/user/download-zip")
+    @GetMapping("/download-zip/user")
     public ResponseEntity<StreamingResponseBody> downloadZip(
             @RequestParam("path") String path,
             @AuthenticationPrincipal UserDetails userDetails
@@ -159,7 +103,7 @@ public class FilesController
                 .body(filesService.downloadZipByUser(path, userDetails.getUsername()));
     }
 
-    @DeleteMapping("/user/delete")
+    @DeleteMapping("/delete/user")
     public ResponseEntity<?> delete(
             @RequestParam("path") String path,
             @AuthenticationPrincipal UserDetails userDetails) throws IOException
