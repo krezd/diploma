@@ -37,11 +37,11 @@ public class RefreshToken
     @Column(nullable = false)
     private boolean isAlive = true;
 
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @PreUpdate
     protected void onUpdate()
     {
-        updatedAt = OffsetDateTime.now();
+        updatedAt = Instant.now();
     }
 }

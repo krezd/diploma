@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Entity
@@ -28,20 +29,20 @@ public class User
     private String name;
 
     @Column(nullable = false, updatable = false)
-    private OffsetDateTime createdAt;
+    private Instant createdAt;
 
-    private OffsetDateTime updatedAt;
+    private Instant updatedAt;
 
     @PrePersist
     protected void onCreate()
     {
-        createdAt = OffsetDateTime.now();
+        createdAt = Instant.now();
     }
 
     @PreUpdate
     protected void onUpdate()
     {
-        updatedAt = OffsetDateTime.now();
+        updatedAt = Instant.now();
     }
 
 }
