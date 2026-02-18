@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
 
 /**
  * Базовый API клиент для взаимодействия с Spring Boot бэкендом

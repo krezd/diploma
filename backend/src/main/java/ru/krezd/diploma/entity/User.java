@@ -3,6 +3,7 @@ package ru.krezd.diploma.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
+import ru.krezd.diploma.enums.UserRole;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -27,6 +28,10 @@ public class User
     private String password;
 
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;

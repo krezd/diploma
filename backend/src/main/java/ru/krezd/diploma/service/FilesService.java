@@ -1,14 +1,9 @@
 package ru.krezd.diploma.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import ru.krezd.diploma.dto.FileInfoResponse;
@@ -28,6 +23,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 @Service
+@Slf4j
 public class FilesService
 {
     @Value("${root.path}")
@@ -75,7 +71,7 @@ public class FilesService
     public List<FileInfoResponse> getUserListFiles(String path, String username) throws IOException
     {
         Path targetPath = validateUserPath(path, username);
-        return getListFiles(path);
+        return getListFiles(targetPath.toString());
     }
 
     private void deleteRecursively(Path root) throws IOException
@@ -102,6 +98,7 @@ public class FilesService
 
         if (!targetPath.startsWith(rootPath))
         {
+            log.warn("Path traversal attempt: " + targetPath);
             throw new AccessDeniedException("Path traversal attempt");
         }
         return targetPath;
@@ -114,6 +111,7 @@ public class FilesService
 
         if (!targetPath.startsWith(checkPath))
         {
+            log.warn("Path traversal attempt: " + targetPath);
             throw new AccessDeniedException("Path traversal attempt");
         }
         return targetPath;
@@ -166,6 +164,23 @@ public class FilesService
 
         deleteRecursively(targetDir);
     }
+
+    public void deleteUserDir(String username) throws IOException
+    {
+        Path targetDir = rootPath.resolve(username).normalize();
+
+        if (targetDir.equals(rootPath))
+        {
+            throw new IllegalArgumentException("Cannot delete root directory");
+        }
+        if (!Files.exists(targetDir))
+        {
+            throw new FileNotFoundException("File does not exist");
+        }
+
+        deleteRecursively(targetDir);
+    }
+
 
     public StreamingResponseBody downloadZipByUser(String path, String username) throws IOException
     {

@@ -37,7 +37,7 @@ public class FilesController
 
     //Для просмотра любой директории внутри rootPath
     @GetMapping("/list")
-    public ResponseEntity<?> getListFiles(@RequestParam String path) throws IOException
+    public ResponseEntity<?> getListFiles(@RequestParam(value = "path", required = false, defaultValue = "") String path) throws IOException
     {
         return ResponseEntity.ok().body(filesService.getListFiles(path));
     }
@@ -67,6 +67,22 @@ public class FilesController
         try
         {
             filesService.createDirByUser(path, userDetails.getUsername());
+        }
+        catch (Exception e)
+        {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/createUserDir/")
+    public ResponseEntity<?> createUserDir(
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException
+    {
+        try
+        {
+            filesService.createUserDir( userDetails.getUsername());
         }
         catch (Exception e)
         {

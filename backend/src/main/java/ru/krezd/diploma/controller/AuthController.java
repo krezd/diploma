@@ -16,6 +16,7 @@ import ru.krezd.diploma.dto.RefreshRequest;
 import ru.krezd.diploma.dto.RegisterRequest;
 import ru.krezd.diploma.entity.RefreshToken;
 import ru.krezd.diploma.entity.User;
+import ru.krezd.diploma.enums.UserRole;
 import ru.krezd.diploma.repository.RefreshTokenRepository;
 import ru.krezd.diploma.service.JwtService;
 import ru.krezd.diploma.service.RefreshTokenService;
@@ -44,10 +45,11 @@ public class AuthController
             User user = userService.createUser(
                     registerRequest.getUsername(),
                     passwordEncoder.encode(registerRequest.getPassword()),
-                    registerRequest.getName()
+                    registerRequest.getName(),
+                    UserRole.REGULAR
             );
 
-            String accessToken = jwtService.generateToken(user.getUsername());
+            String accessToken = jwtService.generateToken(user.getUsername(), user.getRole().name());
             RefreshToken refreshToken = refreshTokenService.createOrUpdateToken(user);
 
             AuthResponse response = AuthResponse.builder()
@@ -84,7 +86,7 @@ public class AuthController
             User user = userService.findByUsername(loginRequest.getUsername())
                     .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
-            String accessToken = jwtService.generateToken(userDetails.getUsername());
+            String accessToken = jwtService.generateToken(userDetails.getUsername(), user.getRole().name());
             RefreshToken refreshToken = refreshTokenService.createOrUpdateToken(user);
 
             AuthResponse response = AuthResponse.builder()
@@ -129,7 +131,7 @@ public class AuthController
             RefreshToken refreshToken = tokenOpt.get();
             User user = refreshToken.getUser();
 
-            String newAccessToken = jwtService.generateToken(user.getUsername());
+            String newAccessToken = jwtService.generateToken(user.getUsername(), user.getRole().name());
             RefreshToken newRefreshToken = refreshTokenService.createOrUpdateToken(user);
 
             AuthResponse response = AuthResponse.builder()

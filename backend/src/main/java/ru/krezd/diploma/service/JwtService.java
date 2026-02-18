@@ -20,12 +20,13 @@ public class JwtService
     @Value("${jwt.accessTtl}")
     private long accessTtlSeconds;
 
-    public String generateToken(String username)
+    public String generateToken(String username, String role)
     {
         Instant now = Instant.now();
 
         return JWT.create()
                 .withSubject(username)
+                .withClaim("role", role)
                 .withIssuedAt(Date.from(now))
                 .withExpiresAt(Date.from(now.plusSeconds(accessTtlSeconds)))
                 .sign(getAlgorithm());
