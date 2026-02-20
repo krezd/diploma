@@ -1,53 +1,35 @@
-/**
- * Константы эндпоинтов Spring Boot API
- * 
- * Структура:
- * /api/v1/jobs/* - для работы с SLURM jobs
- * /api/v1/cluster/* - для мониторинга кластера
- * /api/v1/queues/* - для работы с очередями
- * /api/auth/* - для аутентификации
- */
-
 export const API_ENDPOINTS = {
-  // Аутентификация
   AUTH: {
     LOGIN: '/auth/login',
-    LOGOUT: '/auth/logout',
+    REGISTER: '/auth/register',
     REFRESH: '/auth/refresh',
-    PROFILE: '/auth/profile',
+    LOGOUT: '/auth/logout',
   },
-
-  // SLURM Jobs
-  JOBS: {
-    BASE: '/v1/jobs',
-    LIST: '/v1/jobs',
-    GET: (jobId: string | number) => `/v1/jobs/${jobId}`,
-    SUBMIT: '/v1/jobs/submit',
-    CANCEL: (jobId: string | number) => `/v1/jobs/${jobId}/cancel`,
-    OUTPUT: (jobId: string | number) => `/v1/jobs/${jobId}/output`,
-    STATUS: (jobId: string | number) => `/v1/jobs/${jobId}/status`,
+  SLURM: {
+    JOBS: '/slurm/jobs',
+    USER_JOBS: '/slurm/user/jobs',
+    JOB: (id: number) => `/slurm/job/${id}`,
+    NODES: '/slurm/nodes',
+    NODE: (name: string) => `/slurm/node/${name}`,
   },
-
-  // Кластер
-  CLUSTER: {
-    BASE: '/v1/cluster',
-    STATUS: '/v1/cluster/status',
-    NODES: '/v1/cluster/nodes',
-    NODE: (nodeId: string) => `/v1/cluster/nodes/${nodeId}`,
-    RESOURCES: '/v1/cluster/resources',
-  },
-
-  // Очереди
-  QUEUES: {
-    BASE: '/v1/queues',
-    LIST: '/v1/queues',
-    GET: (queueName: string) => `/v1/queues/${queueName}`,
-  },
-
-  // Статистика
-  STATS: {
-    DASHBOARD: '/v1/stats/dashboard',
-    JOBS: '/v1/stats/jobs',
-    RESOURCES: '/v1/stats/resources',
+  FILES: {
+    // Эндпоинты для любого авторизованного пользователя (путь в рамках своей папки)
+    USER: {
+      LIST: '/files/user/list',
+      UPLOAD: '/files/user/upload',
+      CREATE_DIR: '/files/user/createDir',
+      DOWNLOAD: '/files/user/download',
+      DOWNLOAD_ZIP: '/files/user/download-zip',
+      DELETE: '/files/user/delete',
+    },
+    // Эндпоинты только для ADMIN (полный доступ ко всем директориям)
+    ADMIN: {
+      LIST: '/files/admin/list',
+      UPLOAD: '/files/admin/upload',
+      CREATE_DIR: '/files/admin/createDir',
+      DOWNLOAD: '/files/admin/download',
+      DOWNLOAD_ZIP: '/files/admin/download-zip',
+      DELETE: '/files/admin/delete',
+    },
   },
 } as const;

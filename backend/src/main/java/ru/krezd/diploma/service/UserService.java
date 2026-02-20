@@ -48,7 +48,6 @@ public class UserService implements UserDetailsService {
             throw new IllegalArgumentException("Пользователь с username '" + username + "' уже существует");
         }
 
-        //TODO Создание пользователя в linux
         try {
             linuxUserService.createUser(
                     username,

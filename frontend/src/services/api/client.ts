@@ -1,79 +1,84 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import { useAuthStore } from '@/stores/authStore';
+import { API_ENDPOINTS } from './endpoints';
 
-/**
- * Базовый API клиент для взаимодействия с Spring Boot бэкендом
- * 
- * Как это работает:
- * 1. Создается axios instance с базовым URL
- * 2. Добавляются interceptors для автоматической обработки:
- *    - JWT токенов в заголовках
- *    - Ошибок API
- *    - Loading состояний
- */
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
-
-// Создаем axios instance
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 30000, // 30 секунд для SLURM операций
-  headers: {
-    'Content-Type': 'application/json',
-  },
+const apiClient = axios.create({
+  baseURL: '/api',
+  timeout: 30000,
 });
 
-// Request interceptor - добавляет JWT токен к каждому запросу
-apiClient.interceptors.request.use(
-  (config) => {
-    // Получаем токен из localStorage (или другого места хранения)
-    const token = localStorage.getItem('auth_token');
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    return config;
-  },
-  (error: AxiosError) => {
-    return Promise.reject(error);
+apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const { accessToken } = useAuthStore.getState();
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
   }
-);
+  return config;
+});
 
-// Response interceptor - обрабатывает ошибки
-apiClient.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error: AxiosError) => {
-    // Обработка различных типов ошибок
-    if (error.response) {
-      // Сервер ответил с ошибкой
-      switch (error.response.status) {
-        case 401:
-          // Неавторизован - редирект на login
-          localStorage.removeItem('auth_token');
-          window.location.href = '/login';
-          break;
-        case 403:
-          console.error('Доступ запрещен');
-          break;
-        case 404:
-          console.error('Ресурс не найден');
-          break;
-        case 500:
-          console.error('Ошибка сервера');
-          break;
-        default:
-          console.error('Неизвестная ошибка:', error.response.status);
-      }
-    } else if (error.request) {
-      // Запрос отправлен, но нет ответа
-      console.error('Нет ответа от сервера. Проверьте подключение.');
+type QueueItem = {
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+};
+
+let isRefreshing = false;
+let failedQueue: QueueItem[] = [];
+
+const processQueue = (error: unknown, token: string | null) => {
+  failedQueue.forEach((item) => {
+    if (error) {
+      item.reject(error);
     } else {
-      // Ошибка при настройке запроса
-      console.error('Ошибка запроса:', error.message);
+      item.resolve(token!);
     }
-    
+  });
+  failedQueue = [];
+};
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const { refreshToken, setTokens, logout } = useAuthStore.getState();
+
+      if (!refreshToken) {
+        logout();
+        return Promise.reject(error);
+      }
+
+      try {
+        const { data } = await axios.post<{ accessToken: string; refreshToken: string }>(
+          '/api' + API_ENDPOINTS.AUTH.REFRESH,
+          { refreshToken }
+        );
+        setTokens(data.accessToken, data.refreshToken);
+        processQueue(null, data.accessToken);
+        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        logout();
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
     return Promise.reject(error);
   }
 );

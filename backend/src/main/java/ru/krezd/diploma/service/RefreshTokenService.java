@@ -21,7 +21,7 @@ public class RefreshTokenService
     private long ttl;
 
     public RefreshToken createOrUpdateToken(User user){
-        RefreshToken token = new RefreshToken().builder()
+        RefreshToken token = RefreshToken.builder()
                 .user(user)
                 .token(UUID.randomUUID().toString())
                 .expiresAt(Instant.now().plusSeconds(ttl))

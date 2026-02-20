@@ -199,8 +199,8 @@
     sudo systemctl status slurmrestd
 
     scontrol token lifespan=3600
-    export SLURM_JWT=скопированный_токен
-    curl -H "X-SLURM-USER-TOKEN: $SLURM_JWT" http://127.0.0.1:6820/slurm/v0.0.40/diag
+    export SLURM_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzE1MzI1MjEsImlhdCI6MTc3MTUyODkyMSwic3VuIjoibWFzdGVyIn0.GUo3Ty5_421BsX1xBfd9zO0q2Ge8eArBLemVrNEF9OY
+    curl -H "X-SLURM-USER-TOKEN: $SLURM_JWT" http://127.0.0.1:6820/slurm/v0.0.40/jobs
 
 ## 6. Развертывание приложения
 
