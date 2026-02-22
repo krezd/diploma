@@ -160,6 +160,27 @@ public class LinuxUserService {
         }
     }
 
+    public String getUid(String username) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("id","-u", username);
+            Process process = pb.start();
+
+            if (process.waitFor() != 0) {
+                return null;
+            }
+
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                return reader.readLine();
+            }
+
+        } catch (Exception e) {
+            log.error("Error getting user id", e);
+            return null;
+        }
+    }
+
+
     /**
      * Формирование команды создания пользователя
      */

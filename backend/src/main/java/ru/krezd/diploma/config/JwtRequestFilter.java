@@ -18,7 +18,6 @@ import ru.krezd.diploma.entity.User;
 import ru.krezd.diploma.repository.UserRepository;
 import ru.krezd.diploma.service.JwtService;
 import ru.krezd.diploma.service.RefreshTokenService;
-import ru.krezd.diploma.service.UserService;
 
 import java.io.IOException;
 
@@ -31,8 +30,6 @@ public class JwtRequestFilter extends OncePerRequestFilter
     private JwtService jwtService;
     @Autowired
     private UserDetailsService userService;
-    @Autowired
-    private UserRepository UserRepository;
     @Autowired
     private RefreshTokenService refreshTokenService;
     @Autowired

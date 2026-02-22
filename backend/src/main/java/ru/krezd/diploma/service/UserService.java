@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import ru.krezd.diploma.config.GroupMapper;
 import ru.krezd.diploma.entity.User;
@@ -13,6 +14,7 @@ import ru.krezd.diploma.enums.UserRole;
 import ru.krezd.diploma.repository.UserRepository;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,6 +25,7 @@ public class UserService implements UserDetailsService {
     private final FilesService filesService;
     private final LinuxUserService linuxUserService;
     private final GroupMapper groupMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -117,9 +120,7 @@ public class UserService implements UserDetailsService {
         UserRole oldRole = user.getRole();
         user.setRole(newRole);
 
-        // Обновляем группы в Linux
         if (!oldRole.equals(newRole)) {
-            // Добавляем в новые группы
             for (String group : groupMapper.getAdditionalGroups(newRole)) {
                 linuxUserService.addUserToGroup(username, group);
             }
@@ -129,5 +130,48 @@ public class UserService implements UserDetailsService {
         return userRepository.save(user);
     }
 
+    @Transactional
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 
+    @Transactional
+    public User updateProfile(String username, String name) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден: " + username));
+        user.setName(name);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public void changePassword(String username, String oldPassword, String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new IllegalArgumentException("Новый пароль и подтверждение не совпадают");
+        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден: " + username));
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Текущий пароль указан неверно");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public User adminUpdateUser(String username, String newName, UserRole newRole) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь не найден: " + username));
+        if (newName != null && !newName.isBlank()) {
+            user.setName(newName);
+        }
+        if (newRole != null && !newRole.equals(user.getRole())) {
+            UserRole oldRole = user.getRole();
+            user.setRole(newRole);
+            for (String group : groupMapper.getAdditionalGroups(newRole)) {
+                linuxUserService.addUserToGroup(username, group);
+            }
+            log.info("Admin updated Linux groups for user {} from {} to {}", username, oldRole, newRole);
+        }
+        return userRepository.save(user);
+    }
 }

@@ -21,8 +21,8 @@ public class User
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @Column(unique = true, nullable = false, length = 50)
-    @Pattern(regexp = "^[a-zA-Z0-9]([._-](?![._-])|[a-zA-Z0-9]){3,48}[a-zA-Z0-9]$")
+    @Column(unique = true, nullable = false, length = 32)
+    @Pattern(regexp = "^[a-z][a-z0-9_-]{1,31}$")
     private String username;
 
     @Column(nullable = false, length = 255)

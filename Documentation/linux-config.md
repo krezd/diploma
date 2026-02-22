@@ -275,3 +275,6 @@
     sudo systemctl start diploma-app
     sudo systemctl status diploma-app
     sudo journalctl -u diploma-app -f
+
+
+# Установить slurmdbd, захостить mysql, развернуть postgres для backend и автоматизировать настройку с помощью ansible

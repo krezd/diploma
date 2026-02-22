@@ -18,10 +18,12 @@ import ru.krezd.diploma.entity.RefreshToken;
 import ru.krezd.diploma.entity.User;
 import ru.krezd.diploma.enums.UserRole;
 import ru.krezd.diploma.repository.RefreshTokenRepository;
+import ru.krezd.diploma.service.AppSettingService;
 import ru.krezd.diploma.service.JwtService;
 import ru.krezd.diploma.service.RefreshTokenService;
 import ru.krezd.diploma.service.UserService;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -32,14 +34,24 @@ public class AuthController
     private final AuthenticationManager authenticationManager;
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
-
+    private final AppSettingService appSettingService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    /** Публичный endpoint: возвращает, разрешена ли самостоятельная регистрация. */
+    @GetMapping("/registration-status")
+    public ResponseEntity<Map<String, Boolean>> registrationStatus() {
+        return ResponseEntity.ok(Map.of("enabled", appSettingService.isRegistrationEnabled()));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest)
     {
+        if (!appSettingService.isRegistrationEnabled()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("Самостоятельная регистрация отключена администратором");
+        }
         try
         {
             User user = userService.createUser(

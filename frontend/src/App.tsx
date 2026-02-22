@@ -11,6 +11,9 @@ import { API_ENDPOINTS } from '@/services/api/endpoints';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { FilesPage } from '@/pages/FilesPage';
+import { ClusterPage } from '@/pages/ClusterPage';
+import { UsersPage } from '@/pages/UsersPage';
+import { ProfilePage } from '@/pages/ProfilePage';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import type { AuthTokens } from '@/types/auth.types';
@@ -87,7 +90,9 @@ function App() {
                 <Route path="files" element={<FilesPage />} />
                 {/* Следующие этапы */}
                 <Route path="jobs" element={<Navigate to="/" replace />} />
-                <Route path="cluster" element={<Navigate to="/" replace />} />
+                <Route path="cluster" element={<ClusterPage />} />
+                <Route path="users" element={<UsersPage />} />
+                <Route path="profile" element={<ProfilePage />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
