@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,10 +23,10 @@ import TerminalIcon from '@mui/icons-material/Terminal';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PeopleIcon from '@mui/icons-material/People';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { authApi } from '@/services/api/authApi';
+import { ProfileDialog } from './ProfileDialog';
 
 export const SIDEBAR_WIDTH = 240;
 export const SIDEBAR_COLLAPSED_WIDTH = 64;
@@ -47,7 +47,6 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/cluster', label: 'Кластер', icon: <StorageIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
   { path: '/files', label: 'Файлы', icon: <FolderIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
   { path: '/users', label: 'Пользователи', icon: <PeopleIcon fontSize="small" />, roles: ['ADMIN'] },
-  { path: '/profile', label: 'Профиль', icon: <AccountCircleIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
 ];
 
 export const Sidebar = () => {
@@ -57,6 +56,7 @@ export const Sidebar = () => {
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const logout = useAuthStore((s) => s.logout);
   const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const userRole = user?.role ?? 'REGULAR';
   const navItems = NAV_ITEMS.filter((item) => item.roles.includes(userRole));
@@ -171,19 +171,36 @@ export const Sidebar = () => {
       <Box sx={{ p: sidebarCollapsed ? 1 : 2, borderTop: '1px solid #2d3748' }}>
         {!sidebarCollapsed ? (
           <>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
-                {user?.username?.charAt(0).toUpperCase() ?? '?'}
-              </Avatar>
-              <Box sx={{ overflow: 'hidden' }}>
-                <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user?.username ?? '—'}
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {user?.role === 'ADMIN' ? 'Администратор' : 'Пользователь'}
-                </Typography>
+            <Tooltip title="Настройки профиля" placement="right">
+              <Box
+                onClick={() => setProfileOpen(true)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 1.5,
+                  cursor: 'pointer',
+                  borderRadius: 1.5,
+                  px: 0.5,
+                  py: 0.5,
+                  mx: -0.5,
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
+                  transition: 'background-color 0.15s',
+                }}
+              >
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark', fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+                  {user?.username?.charAt(0).toUpperCase() ?? '?'}
+                </Avatar>
+                <Box sx={{ overflow: 'hidden' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: 'text.primary', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {user?.username ?? '—'}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    {user?.role === 'ADMIN' ? 'Администратор' : 'Пользователь'}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
+            </Tooltip>
             <Button
               fullWidth
               variant="outlined"
@@ -202,8 +219,20 @@ export const Sidebar = () => {
           </>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-            <Tooltip title={user?.username ?? ''} placement="right">
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark', fontSize: 13, fontWeight: 600 }}>
+            <Tooltip title="Настройки профиля" placement="right">
+              <Avatar
+                onClick={() => setProfileOpen(true)}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  bgcolor: 'primary.dark',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  '&:hover': { opacity: 0.85 },
+                  transition: 'opacity 0.15s',
+                }}
+              >
                 {user?.username?.charAt(0).toUpperCase() ?? '?'}
               </Avatar>
             </Tooltip>
@@ -215,6 +244,8 @@ export const Sidebar = () => {
           </Box>
         )}
       </Box>
+
+      <ProfileDialog open={profileOpen} onClose={() => setProfileOpen(false)} />
     </Drawer>
   );
 };

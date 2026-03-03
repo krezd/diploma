@@ -34,7 +34,7 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clusterApi } from '@/services/api/clusterApi';
 import { useAuthStore } from '@/stores/authStore';
-import type { SlurmNode, UpdateNodeRequest } from '@/types/cluster.types';
+import type { SlurmNode, SlurmTres, SlurmDbQos, SlurmClusterRec, UpdateNodeRequest } from '@/types/cluster.types';
 
 // ─── Утилиты ────────────────────────────────────────────────────────────────
 
@@ -585,6 +585,180 @@ const DiagnosticsTab = () => {
   );
 };
 
+// ─── Вкладка: Конфиг slurmdbd (только ADMIN) ────────────────────────────────
+
+const SectionHeader = ({ title }: { title: string }) => (
+  <Typography
+    variant="subtitle2"
+    sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 12, mb: 1.5 }}
+  >
+    {title}
+  </Typography>
+);
+
+const ConfigTab = () => {
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['slurm-db-config'],
+    queryFn: clusterApi.getDbConfig,
+    staleTime: 60_000,
+  });
+
+  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>;
+  if (isError) return <Alert severity="error">Ошибка загрузки конфигурации slurmdbd</Alert>;
+
+  const clusters: SlurmClusterRec[] = data?.clusters ?? [];
+  const tres: SlurmTres[] = data?.tres ?? [];
+  const qos: SlurmDbQos[] = data?.qos ?? [];
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+        <Tooltip title="Обновить">
+          <IconButton size="small" onClick={() => void refetch()} sx={{ color: 'text.secondary' }}>
+            <RefreshIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+
+      {/* ── Кластеры ────────────────────────────────────────────────────── */}
+      <SectionHeader title="Кластеры" />
+      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden', mb: 3 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+              <TableCell>Имя</TableCell>
+              <TableCell>Контроллер</TableCell>
+              <TableCell>Версия RPC</TableCell>
+              <TableCell>Плагин выбора</TableCell>
+              <TableCell>Флаги</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {clusters.map((c) => (
+              <TableRow key={c.name} sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                    {c.name ?? '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
+                    {c.controller?.host ? `${c.controller.host}:${c.controller.port ?? '6817'}` : '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {c.rpc_version ?? '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {c.select_plugin ?? '—'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                    {(c.flags ?? []).map((f) => (
+                      <Chip key={f} label={f} size="small" variant="outlined" sx={{ fontSize: 10, height: 20 }} />
+                    ))}
+                    {(c.flags ?? []).length === 0 && (
+                      <Typography variant="body2" sx={{ color: 'text.disabled' }}>—</Typography>
+                    )}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+            {clusters.length === 0 && (
+              <TableRow><TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>Нет данных</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      {/* ── TRES ────────────────────────────────────────────────────────── */}
+      <SectionHeader title="Trackable Resources (TRES)" />
+      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden', mb: 3 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+              <TableCell>ID</TableCell>
+              <TableCell>Тип</TableCell>
+              <TableCell>Имя</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tres.map((t, i) => (
+              <TableRow key={i} sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{t.id ?? '—'}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>{t.type ?? '—'}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{t.name || '—'}</Typography>
+                </TableCell>
+              </TableRow>
+            ))}
+            {tres.length === 0 && (
+              <TableRow><TableCell colSpan={3} align="center" sx={{ py: 3, color: 'text.secondary' }}>Нет данных</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
+
+      {/* ── QOS ─────────────────────────────────────────────────────────── */}
+      <SectionHeader title="Quality of Service (QOS)" />
+      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+              <TableCell>ID</TableCell>
+              <TableCell>Имя</TableCell>
+              <TableCell>Описание</TableCell>
+              <TableCell>Приоритет</TableCell>
+              <TableCell>Флаги</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {qos.map((q) => (
+              <TableRow key={q.id ?? q.name} sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{q.id ?? '—'}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>{q.name ?? '—'}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>{q.description || '—'}</Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {q.priority?.set === false ? '—' : q.priority?.infinite ? '∞' : (q.priority?.number ?? '—')}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                    {(q.flags ?? []).filter((f) => f !== 'NOT_SET').map((f) => (
+                      <Chip key={f} label={f} size="small" variant="outlined" color="info" sx={{ fontSize: 10, height: 20 }} />
+                    ))}
+                    {(q.flags ?? []).filter((f) => f !== 'NOT_SET').length === 0 && (
+                      <Typography variant="body2" sx={{ color: 'text.disabled' }}>—</Typography>
+                    )}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+            {qos.length === 0 && (
+              <TableRow><TableCell colSpan={5} align="center" sx={{ py: 3, color: 'text.secondary' }}>Нет данных</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </Paper>
+    </Box>
+  );
+};
+
 // ─── Главная страница ────────────────────────────────────────────────────────
 
 export const ClusterPage = () => {
@@ -611,7 +785,7 @@ export const ClusterPage = () => {
   const tabs = [
     { label: 'Узлы' },
     { label: 'Партиции' },
-    ...(isAdmin ? [{ label: 'Диагностика' }] : []),
+    ...(isAdmin ? [{ label: 'Диагностика' }, { label: 'Конфиг' }] : []),
   ];
 
   return (
@@ -680,6 +854,7 @@ export const ClusterPage = () => {
       {tab === 0 && <NodesTab isAdmin={isAdmin} />}
       {tab === 1 && <PartitionsTab />}
       {tab === 2 && isAdmin && <DiagnosticsTab />}
+      {tab === 3 && isAdmin && <ConfigTab />}
     </Box>
   );
 };

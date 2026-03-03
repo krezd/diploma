@@ -58,7 +58,8 @@ public class AuthController
                     registerRequest.getUsername(),
                     passwordEncoder.encode(registerRequest.getPassword()),
                     registerRequest.getName(),
-                    UserRole.REGULAR
+                    UserRole.REGULAR,
+                    null  // null → используется аккаунт по умолчанию из slurm.default.account
             );
 
             String accessToken = jwtService.generateToken(user.getUsername(), user.getRole().name());

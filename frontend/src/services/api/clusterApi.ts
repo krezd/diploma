@@ -5,6 +5,7 @@ import type {
   SlurmPartitionsResponse,
   SlurmDiagResponse,
   SlurmPingResponse,
+  SlurmDbConfigResponse,
   UpdateNodeRequest,
 } from '@/types/cluster.types';
 
@@ -26,4 +27,7 @@ export const clusterApi = {
 
   getPing: (): Promise<SlurmPingResponse> =>
     apiClient.get<SlurmPingResponse>(API_ENDPOINTS.SLURM.PING).then((r) => r.data),
+
+  getDbConfig: (): Promise<SlurmDbConfigResponse> =>
+    apiClient.get<SlurmDbConfigResponse>(API_ENDPOINTS.SLURM.DB_CONFIG).then((r) => r.data),
 };

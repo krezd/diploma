@@ -23,4 +23,7 @@ public class AdminRegisterRequest
     private String name;
 
     private String role;
+
+    /** Аккаунт slurmdbd для привязки. Если не указан — используется аккаунт по умолчанию. */
+    private String account;
 }

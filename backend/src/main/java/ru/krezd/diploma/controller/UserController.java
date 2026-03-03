@@ -84,7 +84,8 @@ public class UserController {
                     request.getUsername(),
                     passwordEncoder.encode(request.getPassword()),
                     request.getName(),
-                    UserRole.valueOf(request.getRole())
+                    UserRole.valueOf(request.getRole()),
+                    request.getAccount()
             );
             return ResponseEntity.status(HttpStatus.CREATED).body(UserDto.from(user));
         } catch (IllegalArgumentException ex) {

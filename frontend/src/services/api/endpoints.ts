@@ -26,6 +26,10 @@ export const API_ENDPOINTS = {
     PARTITION: (name: string) => `/slurm/partition/${name}`,
     DIAG: '/slurm/diag',
     PING: '/slurm/ping',
+    ACCOUNTS: '/slurm/accounts',
+    ACCOUNT: (name: string) => `/slurm/accounts/${name}`,
+    ASSOCIATIONS: '/slurm/associations',
+    DB_CONFIG: '/slurm/db/config',
   },
   FILES: {
     // Эндпоинты для любого авторизованного пользователя (путь в рамках своей папки)

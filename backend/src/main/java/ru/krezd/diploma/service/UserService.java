@@ -26,6 +26,7 @@ public class UserService implements UserDetailsService {
     private final LinuxUserService linuxUserService;
     private final GroupMapper groupMapper;
     private final PasswordEncoder passwordEncoder;
+    private final SlurmAccountService slurmAccountService;
 
     @Override
     @Transactional
@@ -46,7 +47,7 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional
-    public User createUser(String username, String password, String name, UserRole role) throws IOException {
+    public User createUser(String username, String password, String name, UserRole role, String account) throws IOException {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Пользователь с username '" + username + "' уже существует");
         }
@@ -79,6 +80,12 @@ public class UserService implements UserDetailsService {
             User savedUser = userRepository.save(user);
             log.info("User {} created successfully in database", username);
 
+            try {
+                slurmAccountService.registerUserInSlurm(username, account, role);
+            } catch (Exception e) {
+                log.warn("Не удалось зарегистрировать пользователя '{}' в slurmdbd: {}", username, e.getMessage());
+            }
+
             return savedUser;
 
         } catch (Exception e) {
@@ -100,6 +107,13 @@ public class UserService implements UserDetailsService {
             userRepository.delete(user);
             log.info("User {} deleted from database", username);
         });
+
+        // Удаляем из slurmdbd (со всеми ассоциациями)
+        try {
+            slurmAccountService.deleteUserFromSlurm(username);
+        } catch (Exception e) {
+            log.warn("Не удалось удалить пользователя '{}' из slurmdbd: {}", username, e.getMessage());
+        }
 
         // Затем удаляем Linux пользователя
         linuxUserService.deleteUser(username);
@@ -170,8 +184,56 @@ public class UserService implements UserDetailsService {
             for (String group : groupMapper.getAdditionalGroups(newRole)) {
                 linuxUserService.addUserToGroup(username, group);
             }
+            try {
+                slurmAccountService.updateSlurmAdminLevel(username, newRole);
+            } catch (Exception e) {
+                log.warn("Не удалось обновить adminlevel в slurmdbd для '{}': {}", username, e.getMessage());
+            }
             log.info("Admin updated Linux groups for user {} from {} to {}", username, oldRole, newRole);
         }
         return userRepository.save(user);
+    }
+
+    /**
+     * Создаёт пользователя admin/admin при первом старте приложения, если он ещё не существует.
+     * Сбои в создании Linux-пользователя или регистрации в slurmdbd не прерывают процесс —
+     * приложение остаётся доступным, а недостающие части можно настроить позже.
+     */
+    public void ensureDefaultAdminExists() {
+        if (userRepository.findByUsername("admin").isPresent()) {
+            log.debug("Default admin user already exists, skipping initialization");
+            return;
+        }
+
+        log.info("No 'admin' user found — creating default admin (username: admin, password: admin)");
+
+        User adminUser = User.builder()
+                .username("admin")
+                .password(passwordEncoder.encode("admin"))
+                .name("Administrator")
+                .role(UserRole.ADMIN)
+                .build();
+        userRepository.save(adminUser);
+        log.info("Default admin user saved to database");
+
+        try {
+            linuxUserService.createUser("admin", UserRole.ADMIN);
+            log.info("Linux user 'admin' created");
+        } catch (Exception e) {
+            log.warn("Could not create Linux user 'admin' (non-critical): {}", e.getMessage());
+        }
+
+        try {
+            filesService.createUserDir("admin");
+            log.info("Workspace directory for 'admin' created");
+        } catch (Exception e) {
+            log.warn("Could not create workspace directory for 'admin' (non-critical): {}", e.getMessage());
+        }
+
+        try {
+            slurmAccountService.ensureAdminSlurmSetup("admin");
+        } catch (Exception e) {
+            log.warn("Could not register 'admin' in slurmdbd (non-critical): {}", e.getMessage());
+        }
     }
 }

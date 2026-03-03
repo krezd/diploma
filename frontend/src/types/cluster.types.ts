@@ -192,6 +192,45 @@ export interface SlurmPingResponse {
   errors?: SlurmApiError[];
 }
 
+// ── Конфигурация slurmdbd ────────────────────────────────────────────────────
+
+export interface SlurmTres {
+  type?: string;
+  name?: string;
+  id?: number;
+  count?: number;
+}
+
+export interface SlurmDbQos {
+  id?: number;
+  name?: string;
+  description?: string;
+  flags?: string[];
+  priority?: SlurmUint32;
+  usage_factor?: SlurmUint32;
+  usage_threshold?: SlurmUint32;
+}
+
+export interface SlurmClusterRec {
+  name?: string;
+  flags?: string[];
+  nodes?: string;
+  select_plugin?: string;
+  rpc_version?: number;
+  controller?: {
+    host?: string;
+    port?: number;
+  };
+}
+
+export interface SlurmDbConfigResponse {
+  clusters?: SlurmClusterRec[];
+  tres?: SlurmTres[];
+  qos?: SlurmDbQos[];
+  errors?: SlurmApiError[];
+  warnings?: SlurmApiWarning[];
+}
+
 // ── Управление узлом (запрос) ────────────────────────────────────────────────
 
 export interface UpdateNodeRequest {

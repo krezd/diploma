@@ -138,7 +138,15 @@
     SelectType=select/cons_tres
     SelectTypeParameters=CR_Core
     TaskPlugin=task/none
-    
+
+    # Accounting
+    AccountingStorageType=accounting_storage/slurmdbd
+    AccountingStorageHost=master
+    AccountingStoragePort=6819
+    AccountingStoreFlags=job_comment
+    JobAcctGatherType=jobacct_gather/linux
+    JobAcctGatherFrequency=30
+
     # Logging
     SlurmctldDebug=info
     SlurmctldLogFile=/var/log/slurm/slurmctld.log
@@ -191,7 +199,7 @@
     ExecStart=
     Environment=SLURM_JWT=daemon
     
-    ExecStart=/usr/sbin/slurmrestd -a rest_auth/jwt -s slurmctld 0.0.0.0:68200
+    ExecStart=/usr/sbin/slurmrestd -a rest_auth/jwt -s slurmctld,slurmdbd 0.0.0.0:6820
     # 
 
     sudo systemctl daemon-reload
@@ -199,10 +207,140 @@
     sudo systemctl status slurmrestd
 
     scontrol token lifespan=3600
-    export SLURM_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzE1MzI1MjEsImlhdCI6MTc3MTUyODkyMSwic3VuIjoibWFzdGVyIn0.GUo3Ty5_421BsX1xBfd9zO0q2Ge8eArBLemVrNEF9OY
+    export SLURM_JWT=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdW4iOiJhZG1pbiIsImlhdCI6MTc3MTgwMDE3NiwiZXhwIjoxNzcxODAxOTc2fQ.6iHiiV-JsNh20IdvjpAQ7tN3z4EJKcyCEhNZNWxrD_s
     curl -H "X-SLURM-USER-TOKEN: $SLURM_JWT" http://127.0.0.1:6820/slurm/v0.0.40/jobs
 
-## 6. Развертывание приложения
+## 5. Docker
+
+ Master node
+    
+    # Add Docker's official GPG key:
+    sudo apt update
+    sudo apt install ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
+    
+    # Add the repository to Apt sources:
+    sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+    Types: deb
+    URIs: https://download.docker.com/linux/ubuntu
+    Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+    Components: stable
+    Signed-By: /etc/apt/keyrings/docker.asc
+    EOF
+
+    sudo apt update
+    sudo apt install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo systemctl status docker
+    sudo systemctl start docker
+    sudo usermod -aG docker $USER
+    newgrp docker
+    docker compose up -d # находясь в папке с docker-compose.yml файлом
+    
+    # docker-compose.yml (не окончательная версия):
+
+    version: '3.8'
+    services:
+    postgres:
+    image: postgres:15
+    container_name: diploma-postgres
+    environment:
+    POSTGRES_DB: diploma
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: admin
+    ports:
+    - "0.0.0.0:5432:5432"
+    command:
+      - "postgres"
+      - "-c"
+      - "listen_addresses=*"
+      volumes:
+      - pgdata:/var/lib/postgresql/data
+      networks:
+      - diploma_app
+      restart: unless-stopped
+    
+    mysql_slurm:
+    image: mysql:8
+    container_name: mysql_slurm
+    environment:
+    MYSQL_DATABASE: slurm_acct_db
+    MYSQL_USER: slurm
+    MYSQL_PASSWORD: slurm_secret
+    MYSQL_ROOT_PASSWORD: root_secret
+    volumes:
+    - mysql_slurm_data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3307:3306"   # Только localhost — slurmdbd на том же хосте
+      networks:
+      - slurm_network
+      restart: unless-stopped
+    command: 
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+      - "--innodb-buffer-pool-size=2G"
+      - "--innodb-lock-wait-timeout=900"
+    
+    volumes:
+    pgdata:
+    mysql_slurm_data:
+    
+    networks:
+    diploma_app:
+    slurm_network:
+
+    docker exec mysql_slurm mysqladmin -u slurm -pslurm_secret -h 127.0.0.1 ping
+
+## 6. Slurmdbd
+
+ Master node
+
+    sudo apt install -y slurmdbd
+    sudo nano /etc/slurm/slurmdbd.conf
+
+    AuthType=auth/munge
+    AuthAltTypes=auth/jwt
+    AuthAltParameters=jwt_key=/var/spool/slurm/ctld/jwt_hs256.key
+    DbdHost=master
+    DbdPort=6819
+    SlurmUser=slurm
+    DebugLevel=info
+    LogFile=/var/log/slurm/slurmdbd.log
+    PidFile=/var/run/slurm/slurmdbd.pid
+    
+    # MySQL через Docker (порт 3307)
+    StorageType=accounting_storage/mysql
+    StorageHost=127.0.0.1
+    StoragePort=3307
+    StorageUser=slurm
+    StoragePass=slurm_secret
+    StorageLoc=slurm_acct_db
+
+    sudo chown slurm:slurm /etc/slurm/slurmdbd.conf
+    sudo chmod 600 /etc/slurm/slurmdbd.conf
+    sudo mkdir -p /var/run/slurm
+    sudo chown slurm:slurm /var/run/slurm
+
+ Изменение slurm.conf
+
+    sudo nano /etc/slurm/slurm.conf
+
+    AccountingStorageType=accounting_storage/slurmdbd
+    AccountingStorageHost=master
+    AccountingStoragePort=6819
+    AccountingStoreFlags=job_comment
+    JobAcctGatherType=jobacct_gather/linux
+    JobAcctGatherFrequency=30
+
+ Master node
+
+    docker exec mysql_slurm mysqladmin -u slurm -pslurm_secret -h 127.0.0.1 ping
+    sudo systemctl enable slurmdbd
+    sudo systemctl start slurmdbd
+    sudo systemctl status slurmdbd
+
+## 7. Развертывание приложения
 
  Master node
  
@@ -215,7 +353,7 @@
     sudo setfacl -m u:diploma-app:r /var/spool/slurm/ctld/jwt_hs256.key
     sudo -u diploma-app cat /var/spool/slurm/ctld/jwt_hs256.key > /dev/null && echo "Доступ есть" || echo "Нет доступа"
     sudo visudo -f /etc/sudoers.d/diploma-app
-    diploma-app ALL=(ALL) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/bin/getent, /usr/bin/id, /usr/bin/passwd, /bin/chown, /bin/chmod, /bin/mkdir, /bin/rm, /bin/cp, /bin/mv
+    diploma-app ALL=(ALL) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/bin/getent, /usr/bin/id, /usr/bin/passwd, /bin/chown, /bin/chmod, /bin/mkdir, /bin/rm, /bin/cp, /bin/mv, /usr/bin/sacctmgr
     sudo chmod 440 /etc/sudoers.d/diploma-app
     sudo mkdir -p /shared/workspace/diploma-app
     sudo chown diploma-app:diploma-app /shared/workspace/diploma-app
@@ -224,7 +362,7 @@
     sudo apt install -y openjdk-21-jdk
     sudo mkdir -p /opt/diploma-app
     sudo chown diploma-app:diploma-app /opt/diploma-app
-    sudo nano /etc/systemd/system/diploma-app.service
+    sudo nano /etc/systemd/system/diploma-app-debug.service
     #
     [Unit]
     Description=Diploma Spring Boot Application
@@ -269,7 +407,8 @@
     [Install]
     WantedBy=multi-user.target
     #
-
+    
+    # Соответственно в рабочей папке должно лежать само приложение
     sudo systemctl daemon-reload
     sudo systemctl enable diploma-app
     sudo systemctl start diploma-app

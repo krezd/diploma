@@ -12,6 +12,7 @@ export interface AdminUserCreateRequest {
   password: string;
   name: string;
   role: 'REGULAR' | 'ADMIN';
+  account?: string;
 }
 
 export interface AdminUserUpdateRequest {
