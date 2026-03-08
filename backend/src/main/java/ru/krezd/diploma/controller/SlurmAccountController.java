@@ -8,6 +8,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.krezd.diploma.dto.AssociateUserRequest;
 import ru.krezd.diploma.dto.CreateAccountRequest;
+import ru.krezd.diploma.dto.SetAssociationLimitsRequest;
+import ru.krezd.diploma.dto.SetAssociationQosRequest;
 import ru.krezd.diploma.dto.slurm.account.SlurmAccountsResponseDTO;
 import ru.krezd.diploma.dto.slurm.account.SlurmAssociationsResponseDTO;
 import ru.krezd.diploma.service.SlurmAccountService;
@@ -102,6 +104,35 @@ public class SlurmAccountController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Ошибка при удалении ассоциации: " + e.getMessage());
+        }
+    }
+
+    /** PUT /api/slurm/associations/qos — установить QOS для ассоциации */
+    @PutMapping("/associations/qos")
+    public ResponseEntity<?> setAssociationQos(@Valid @RequestBody SetAssociationQosRequest request) {
+        try {
+            slurmAccountService.setAssociationQos(
+                    request.getAccount(),
+                    request.getUser(),
+                    request.getQos(),
+                    request.getDefaultQos()
+            );
+            return ResponseEntity.ok("QOS обновлён для ассоциации");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при обновлении QOS ассоциации: " + e.getMessage());
+        }
+    }
+
+    /** PUT /api/slurm/associations/limits — установить лимиты TRES и заданий для ассоциации */
+    @PutMapping("/associations/limits")
+    public ResponseEntity<?> setAssociationLimits(@Valid @RequestBody SetAssociationLimitsRequest request) {
+        try {
+            slurmAccountService.setAssociationLimits(request);
+            return ResponseEntity.ok("Лимиты обновлены для ассоциации");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Ошибка при обновлении лимитов ассоциации: " + e.getMessage());
         }
     }
 }

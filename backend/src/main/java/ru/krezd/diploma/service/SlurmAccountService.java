@@ -7,33 +7,25 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import ru.krezd.diploma.dto.SetAssociationLimitsRequest;
 import ru.krezd.diploma.dto.slurm.account.SlurmAccountsResponseDTO;
 import ru.krezd.diploma.dto.slurm.account.SlurmAssociationDTO;
 import ru.krezd.diploma.dto.slurm.account.SlurmAssociationsResponseDTO;
 import ru.krezd.diploma.enums.UserRole;
+import ru.krezd.diploma.repository.UserRepository;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Сервис для управления аккаунтами и ассоциациями в slurmdbd.
  *
- * <p>READ-операции (списки аккаунтов, ассоциаций) выполняются через REST API slurmrestd.
- * WRITE-операции (создание/удаление аккаунтов, ассоциаций, регистрация пользователей)
- * выполняются через sacctmgr CLI, поскольку REST API slurmrestd v0.0.40:</p>
- * <ul>
- *   <li>При создании аккаунта не создаёт ассоциацию аккаунта с кластером,
- *       из-за чего пользователей нельзя к нему привязать.</li>
- *   <li>Иногда закрывает TCP-соединение без HTTP-ответа («Unexpected end of file»),
- *       что приводит к порче keep-alive соединения и каскадным ошибкам.</li>
- * </ul>
- * <p>sacctmgr создаёт аккаунт вместе с ассоциацией кластера за один вызов
- * и работает надёжно через sudo без JWT.</p>
+ * <p>READ-операции выполняются через REST API slurmrestd.
+ * WRITE-операции выполняются через sacctmgr CLI (через {@link SlurmCliRunner}).</p>
  */
 @Service
 @Slf4j
@@ -42,6 +34,12 @@ public class SlurmAccountService {
     @Autowired
     @Qualifier("slurmRestTemplate")
     private RestTemplate slurmRestTemplate;
+
+    @Autowired
+    private SlurmCliRunner cliRunner;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Value("${slurm.db.address}")
     private String slurmDbAddress;
@@ -57,9 +55,6 @@ public class SlurmAccountService {
 
     // ── Аккаунты: READ (REST) ────────────────────────────────────────────────
 
-    /**
-     * Возвращает список всех аккаунтов slurmdbd.
-     */
     public SlurmAccountsResponseDTO getAccounts() {
         return slurmRestTemplate.getForObject(
                 slurmDbAddress + "accounts",
@@ -69,13 +64,6 @@ public class SlurmAccountService {
 
     // ── Аккаунты: WRITE (CLI) ────────────────────────────────────────────────
 
-    /**
-     * Создаёт новый аккаунт в slurmdbd и его ассоциацию с кластером через sacctmgr.
-     *
-     * <p>REST API v0.0.40 POST /accounts создаёт только запись аккаунта без ассоциации
-     * с кластером, поэтому после него нельзя добавить пользователя к аккаунту.
-     * sacctmgr add account с параметром cluster= создаёт их одновременно.</p>
-     */
     public void createAccount(String name, String description, String organization) {
         try {
             String desc = (description != null && !description.isBlank()) ? description : name;
@@ -88,19 +76,16 @@ public class SlurmAccountService {
             if (organization != null && !organization.isBlank()) {
                 args.add("organization=" + organization);
             }
-            runSacctmgr(args.toArray(String[]::new));
+            cliRunner.runSacctmgr(args.toArray(String[]::new));
             log.info("Создан аккаунт SLURM: {} (кластер: {})", name, clusterName);
         } catch (Exception e) {
             throw new RuntimeException("Не удалось создать аккаунт '" + name + "': " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Удаляет аккаунт из slurmdbd через sacctmgr.
-     */
     public void deleteAccount(String name) {
         try {
-            runSacctmgr("delete", "account", "name=" + name);
+            cliRunner.runSacctmgr("delete", "account", "name=" + name);
             log.info("Удалён аккаунт SLURM: {}", name);
         } catch (Exception e) {
             throw new RuntimeException("Не удалось удалить аккаунт '" + name + "': " + e.getMessage(), e);
@@ -109,9 +94,6 @@ public class SlurmAccountService {
 
     // ── Ассоциации: READ (REST) ──────────────────────────────────────────────
 
-    /**
-     * Возвращает список ассоциаций с возможностью фильтрации по аккаунту и пользователю.
-     */
     public SlurmAssociationsResponseDTO getAssociations(String account, String user) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(slurmDbAddress + "associations");
@@ -121,24 +103,39 @@ public class SlurmAccountService {
         if (user != null && !user.isBlank()) {
             builder.queryParam("user", user);
         }
-        return slurmRestTemplate.getForObject(
+        SlurmAssociationsResponseDTO response = slurmRestTemplate.getForObject(
                 builder.toUriString(),
-
                 SlurmAssociationsResponseDTO.class
         );
+
+        // Фильтруем user-level ассоциации: показываем только тех пользователей,
+        // которые зарегистрированы в БД приложения.
+        // Account-level ассоциации (user == null/"") показываем всегда.
+        if (response != null && response.getAssociations() != null) {
+            Set<String> appUsernames = userRepository.findAll().stream()
+                    .map(u -> u.getUsername())
+                    .collect(Collectors.toSet());
+
+            List<SlurmAssociationDTO> filtered = response.getAssociations().stream()
+                    .filter(a -> {
+                        String assocUser = a.getUser();
+                        return assocUser == null || assocUser.isBlank()
+                                || appUsernames.contains(assocUser);
+                    })
+                    .peek(a -> a.setLimits(a.computeLimits()))
+                    .collect(Collectors.toList());
+
+            response.setAssociations(filtered);
+        }
+
+        return response;
     }
 
     // ── Ассоциации: WRITE (CLI) ──────────────────────────────────────────────
 
-    /**
-     * Создаёт ассоциацию между пользователем и аккаунтом через sacctmgr.
-     *
-     * <p>Если пользователь ещё не существует в slurmdbd — sacctmgr его создаёт.
-     * Если ассоциация уже есть — sacctmgr сообщает об этом, но не падает.</p>
-     */
     public void createAssociation(String username, String accountName) {
         try {
-            runSacctmgr("add", "user",
+            cliRunner.runSacctmgr("add", "user",
                     "name=" + username,
                     "account=" + accountName,
                     "cluster=" + clusterName);
@@ -150,14 +147,11 @@ public class SlurmAccountService {
     }
 
     /**
-     * Удаляет ассоциацию пользователя с аккаунтом через sacctmgr.
-     *
-     * <p>sacctmgr запрещает удалять дефолтный аккаунт и ассоциации по одной при наличии единственной.
-     * Поэтому используется подход: получить все текущие ассоциации пользователя → удалить пользователя
-     * из кластера целиком → добавить обратно все аккаунты кроме удаляемого.</p>
+     * Удаляет ассоциацию пользователя с аккаунтом.
+     * Использует подход: получить все ассоциации → удалить пользователя целиком →
+     * восстановить оставшиеся. sacctmgr запрещает удаление единственной ассоциации.
      */
     public void deleteAssociation(String username, String accountName) {
-        // 1. Получаем текущие ассоциации пользователя
         SlurmAssociationsResponseDTO assocResponse = getAssociations(null, username);
         List<String> remainingAccounts = List.of();
         if (assocResponse != null && assocResponse.getAssociations() != null) {
@@ -170,9 +164,8 @@ public class SlurmAccountService {
                     .collect(Collectors.toList());
         }
 
-        // 2. Полностью удаляем пользователя из кластера
         try {
-            runSacctmgr("delete", "user", "name=" + username, "cluster=" + clusterName);
+            cliRunner.runSacctmgr("delete", "user", "name=" + username, "cluster=" + clusterName);
             log.debug("Пользователь '{}' удалён из кластера '{}' для переподключения аккаунтов",
                     username, clusterName);
         } catch (Exception e) {
@@ -180,10 +173,9 @@ public class SlurmAccountService {
                     + username + "' из кластера: " + e.getMessage(), e);
         }
 
-        // 3. Переподключаем оставшиеся аккаунты
         for (String account : remainingAccounts) {
             try {
-                runSacctmgr("add", "user",
+                cliRunner.runSacctmgr("add", "user",
                         "name=" + username,
                         "account=" + account,
                         "cluster=" + clusterName);
@@ -200,15 +192,112 @@ public class SlurmAccountService {
                 username, accountName, remainingAccounts.size());
     }
 
-    // ── Регистрация пользователя (CLI) ───────────────────────────────────────
+    /**
+     * Устанавливает список разрешённых QOS и/или default QOS для ассоциации через sacctmgr.
+     *
+     * <pre>sacctmgr -i modify association where account=&lt;acc&gt; cluster=&lt;cluster&gt;
+     *   [user=&lt;user&gt;] set qos=&lt;q1,q2&gt; [defaultqos=&lt;qos&gt;]</pre>
+     *
+     * @param account    имя аккаунта (обязательно)
+     * @param user       имя пользователя; null/"" = account-level ассоциация
+     * @param qosList    список QOS; null = без изменений, пустой список = очистить
+     * @param defaultQos default QOS; null = без изменений, "" = очистить
+     */
+    public void setAssociationQos(String account, String user,
+                                  List<String> qosList, String defaultQos) {
+        try {
+            boolean isUser = user != null && !user.isBlank();
+            List<String> args = new ArrayList<>();
+            if (isUser) {
+                // sacctmgr -i modify user where name=<user> account=<account> cluster=<cluster> set ...
+                args.addAll(Arrays.asList(
+                        "modify", "user", "where",
+                        "name=" + user,
+                        "account=" + account,
+                        "cluster=" + clusterName
+                ));
+            } else {
+                // sacctmgr -i modify account where name=<account> cluster=<cluster> set ...
+                args.addAll(Arrays.asList(
+                        "modify", "account", "where",
+                        "name=" + account,
+                        "cluster=" + clusterName
+                ));
+            }
+            args.add("set");
+            if (qosList != null) {
+                args.add("qos=" + String.join(",", qosList));
+            }
+            if (defaultQos != null) {
+                args.add("defaultqos=" + defaultQos);
+            }
+            cliRunner.runSacctmgr(args.toArray(String[]::new));
+            log.info("Обновлён QOS: account='{}', user='{}', qos={}, default='{}'",
+                    account, user, qosList, defaultQos);
+        } catch (Exception e) {
+            throw new RuntimeException("Не удалось обновить QOS ассоциации: " + e.getMessage(), e);
+        }
+    }
 
     /**
-     * Регистрирует нового пользователя в slurmdbd и создаёт ассоциацию с аккаунтом.
+     * Устанавливает лимиты TRES и заданий для ассоциации через sacctmgr.
      *
-     * @param username    имя пользователя
-     * @param accountName аккаунт для привязки (если null — используется defaultAccount)
-     * @param role        роль: ADMIN → adminlevel=Administrator, REGULAR → None
+     * <pre>sacctmgr -i modify association where account=&lt;acc&gt; cluster=&lt;cluster&gt;
+     *   [user=&lt;user&gt;] set [maxjobs=..] [grptres=..] [fairshare=..] ...</pre>
+     *
+     * <p>null = не изменять; -1 = UNLIMITED; 0 = снять лимит.</p>
      */
+    public void setAssociationLimits(SetAssociationLimitsRequest req) {
+        try {
+            String user = req.getUser();
+            boolean isUser = user != null && !user.isBlank();
+            List<String> args = new ArrayList<>();
+            if (isUser) {
+                // sacctmgr -i modify user where name=<user> account=<account> cluster=<cluster> set ...
+                args.addAll(Arrays.asList(
+                        "modify", "user", "where",
+                        "name=" + user,
+                        "account=" + req.getAccount(),
+                        "cluster=" + clusterName
+                ));
+            } else {
+                // sacctmgr -i modify account where name=<account> cluster=<cluster> set ...
+                args.addAll(Arrays.asList(
+                        "modify", "account", "where",
+                        "name=" + req.getAccount(),
+                        "cluster=" + clusterName
+                ));
+            }
+            args.add("set");
+
+            // Индивидуальные лимиты
+            if (req.getMaxJobs() != null)           args.add("maxjobs=" + req.getMaxJobs());
+            if (req.getMaxJobsAccrue() != null)     args.add("maxjobsaccrue=" + req.getMaxJobsAccrue());
+            if (req.getMaxSubmitJobs() != null)     args.add("maxsubmitjobs=" + req.getMaxSubmitJobs());
+            if (req.getMaxWallMinutes() != null)
+                                                     args.add("maxwall=" + SlurmCliRunner.minutesToHhMmSs(req.getMaxWallMinutes()));
+            if (notBlank(req.getMaxTresPerJob()))   args.add("maxtresperjob=" + req.getMaxTresPerJob().trim());
+            if (notBlank(req.getMaxTresPerNode()))  args.add("maxtrespernode=" + req.getMaxTresPerNode().trim());
+            if (notBlank(req.getMaxTresMinsPerJob()))
+                                                     args.add("maxtresminsperjob=" + req.getMaxTresMinsPerJob().trim());
+
+            // Fairshare
+            if (req.getFairshare() != null)         args.add("fairshare=" + req.getFairshare());
+
+            cliRunner.runSacctmgr(args.toArray(String[]::new));
+            log.info("Обновлены лимиты ассоциации: account='{}', user='{}'",
+                    req.getAccount(), req.getUser());
+        } catch (Exception e) {
+            throw new RuntimeException("Не удалось обновить лимиты ассоциации: " + e.getMessage(), e);
+        }
+    }
+
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
+    }
+
+    // ── Регистрация пользователя (CLI) ───────────────────────────────────────
+
     public void registerUserInSlurm(String username, String accountName, UserRole role) {
         String resolvedAccount = (accountName != null && !accountName.isBlank())
                 ? accountName
@@ -216,7 +305,7 @@ public class SlurmAccountService {
         String adminLevel = (role == UserRole.ADMIN) ? "Administrator" : "None";
 
         try {
-            runSacctmgr("add", "user",
+            cliRunner.runSacctmgr("add", "user",
                     "name=" + username,
                     "account=" + resolvedAccount,
                     "cluster=" + clusterName,
@@ -231,13 +320,10 @@ public class SlurmAccountService {
         }
     }
 
-    /**
-     * Обновляет adminlevel пользователя в slurmdbd через sacctmgr.
-     */
     public void updateSlurmAdminLevel(String username, UserRole role) {
         String adminLevel = (role == UserRole.ADMIN) ? "Administrator" : "None";
         try {
-            runSacctmgr("modify", "user", "name=" + username, "set", "adminlevel=" + adminLevel);
+            cliRunner.runSacctmgr("modify", "user", "name=" + username, "set", "adminlevel=" + adminLevel);
             log.info("Обновлён adminlevel пользователя '{}' → {}", username, adminLevel);
         } catch (Exception e) {
             log.error("Не удалось обновить adminlevel для '{}': {}", username, e.getMessage());
@@ -245,12 +331,9 @@ public class SlurmAccountService {
         }
     }
 
-    /**
-     * Удаляет пользователя из slurmdbd вместе со всеми его ассоциациями через sacctmgr.
-     */
     public void deleteUserFromSlurm(String username) {
         try {
-            runSacctmgr("delete", "user", "name=" + username);
+            cliRunner.runSacctmgr("delete", "user", "name=" + username);
             log.info("Пользователь '{}' удалён из slurmdbd", username);
         } catch (Exception e) {
             log.error("Не удалось удалить '{}' из slurmdbd: {}", username, e.getMessage());
@@ -261,13 +344,10 @@ public class SlurmAccountService {
 
     // ── Инициализация (CLI) ──────────────────────────────────────────────────
 
-    /**
-     * Проверяет наличие аккаунта по умолчанию и создаёт его при необходимости.
-     */
     public void ensureDefaultAccountExists() {
         try {
-            if (!slurmAccountExistsCli(defaultAccount)) {
-                runSacctmgr("add", "account",
+            if (!cliRunner.slurmAccountExistsCli(defaultAccount)) {
+                cliRunner.runSacctmgr("add", "account",
                         "name=" + defaultAccount,
                         "cluster=" + clusterName,
                         "description=Default user account");
@@ -281,13 +361,10 @@ public class SlurmAccountService {
         }
     }
 
-    /**
-     * Создаёт admin-аккаунт и admin-пользователя в slurmdbd при первом старте.
-     */
     public void ensureAdminSlurmSetup(String username) {
         try {
-            if (!slurmAccountExistsCli(adminAccount)) {
-                runSacctmgr("add", "account",
+            if (!cliRunner.slurmAccountExistsCli(adminAccount)) {
+                cliRunner.runSacctmgr("add", "account",
                         "name=" + adminAccount,
                         "cluster=" + clusterName,
                         "description=Admin account");
@@ -301,8 +378,8 @@ public class SlurmAccountService {
         }
 
         try {
-            if (!slurmUserExistsCli(username)) {
-                runSacctmgr("add", "user",
+            if (!cliRunner.slurmUserExistsCli(username)) {
+                cliRunner.runSacctmgr("add", "user",
                         "name=" + username,
                         "account=" + adminAccount,
                         "cluster=" + clusterName,
@@ -315,66 +392,6 @@ public class SlurmAccountService {
             }
         } catch (Exception e) {
             log.warn("Не удалось зарегистрировать '{}' в slurmdbd: {}", username, e.getMessage());
-        }
-    }
-
-    // ── CLI вспомогательные методы ───────────────────────────────────────────
-
-    private boolean slurmAccountExistsCli(String accountName) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(
-                "sudo", "sacctmgr", "-n", "-P", "show", "account", "name=" + accountName);
-        pb.redirectErrorStream(true);
-        Process process = pb.start();
-        String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
-                .lines().collect(Collectors.joining("\n"));
-        process.waitFor();
-        return !output.isBlank();
-    }
-
-    private boolean slurmUserExistsCli(String username) throws IOException, InterruptedException {
-        ProcessBuilder pb = new ProcessBuilder(
-                "sudo", "sacctmgr", "-n", "-P", "show", "user", "name=" + username);
-        pb.redirectErrorStream(true);
-        Process process = pb.start();
-        String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
-                .lines().collect(Collectors.joining("\n"));
-        process.waitFor();
-        return !output.isBlank();
-    }
-
-    /**
-     * Выполняет sacctmgr с флагом -i (без запроса подтверждения).
-     * Идемпотентные «ошибки» sacctmgr (Nothing new, already exists и т.п.)
-     * логируются как debug, а не выбрасывают исключение.
-     */
-    private void runSacctmgr(String... args) throws IOException, InterruptedException {
-        List<String> command = new ArrayList<>();
-        command.add("sudo");
-        command.add("sacctmgr");
-        command.add("-i");
-        command.addAll(Arrays.asList(args));
-
-        log.debug("sacctmgr: {}", String.join(" ", command));
-
-        ProcessBuilder pb = new ProcessBuilder(command);
-        pb.redirectErrorStream(true);
-        Process process = pb.start();
-        String output = new BufferedReader(new InputStreamReader(process.getInputStream()))
-                .lines().collect(Collectors.joining("\n"));
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0) {
-            // Некоторые завершения с ненулевым кодом — это «ничего не изменилось», а не ошибка
-            String lower = output.toLowerCase();
-            if (lower.contains("nothing new") || lower.contains("nothing modified")
-                    || lower.contains("already exists") || lower.contains("already registered")) {
-                log.debug("sacctmgr (идемпотентно, exit {}): {}", exitCode, output);
-                return;
-            }
-            throw new RuntimeException("sacctmgr завершился с ошибкой (exit " + exitCode + "): " + output);
-        }
-        if (!output.isBlank()) {
-            log.debug("sacctmgr output: {}", output);
         }
     }
 }

@@ -30,6 +30,11 @@ export const API_ENDPOINTS = {
     ACCOUNT: (name: string) => `/slurm/accounts/${name}`,
     ASSOCIATIONS: '/slurm/associations',
     DB_CONFIG: '/slurm/db/config',
+    QOS_LIST: '/slurm/qos',
+    QOS: (name: string) => `/slurm/qos/${name}`,
+    TRES: '/slurm/tres',
+    ASSOCIATIONS_QOS: '/slurm/associations/qos',
+    ASSOCIATIONS_LIMITS: '/slurm/associations/limits',
   },
   FILES: {
     // Эндпоинты для любого авторизованного пользователя (путь в рамках своей папки)

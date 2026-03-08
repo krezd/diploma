@@ -144,6 +144,7 @@
     AccountingStorageHost=master
     AccountingStoragePort=6819
     AccountingStoreFlags=job_comment
+    AccountingStorageTRES=gres/gpu
     JobAcctGatherType=jobacct_gather/linux
     JobAcctGatherFrequency=30
 
@@ -330,6 +331,7 @@
     AccountingStorageHost=master
     AccountingStoragePort=6819
     AccountingStoreFlags=job_comment
+    AccountingStorageTRES=gres/gpu
     JobAcctGatherType=jobacct_gather/linux
     JobAcctGatherFrequency=30
 

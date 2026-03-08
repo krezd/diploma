@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import QosTab from './QosTab';
 import {
   Box,
   Typography,
@@ -819,10 +820,12 @@ export const UsersPage = () => {
       >
         <Tab label="Пользователи" />
         <Tab label="Аккаунты SLURM" />
+        <Tab label="QOS" />
       </Tabs>
 
       {tab === 0 && <UsersTab />}
       {tab === 1 && <AccountsTab />}
+      {tab === 2 && <Box sx={{ pt: 3 }}><QosTab /></Box>}
     </Box>
   );
 };
