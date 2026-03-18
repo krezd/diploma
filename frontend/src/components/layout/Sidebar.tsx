@@ -23,6 +23,8 @@ import TerminalIcon from '@mui/icons-material/Terminal';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PeopleIcon from '@mui/icons-material/People';
+import AppsIcon from '@mui/icons-material/Apps';
+import ViewListIcon from '@mui/icons-material/ViewList';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { authApi } from '@/services/api/authApi';
@@ -44,6 +46,8 @@ const NAV_ITEMS: NavItem[] = [
   { path: '/', label: 'Dashboard', icon: <DashboardIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
   { path: '/jobs', label: 'Мои задачи', icon: <WorkIcon fontSize="small" />, roles: ['REGULAR'] },
   { path: '/jobs', label: 'Все задачи', icon: <WorkIcon fontSize="small" />, roles: ['ADMIN'] },
+  { path: '/jobs/templates', label: 'Шаблоны заданий', icon: <ViewListIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
+  { path: '/software', label: 'ПО кластера', icon: <AppsIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
   { path: '/cluster', label: 'Кластер', icon: <StorageIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
   { path: '/files', label: 'Файлы', icon: <FolderIcon fontSize="small" />, roles: ['REGULAR', 'ADMIN'] },
   { path: '/users', label: 'Пользователи', icon: <PeopleIcon fontSize="small" />, roles: ['ADMIN'] },

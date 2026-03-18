@@ -67,6 +67,30 @@ export const filesApi = {
     await apiClient.delete(endpoint, { params: { path } });
   },
 
+  /** Прочитать текстовый файл (для загрузки в редактор скрипта) */
+  readFileAsText: async (path: string, isAdmin: boolean): Promise<string> => {
+    const endpoint = isAdmin
+      ? API_ENDPOINTS.FILES.ADMIN.DOWNLOAD
+      : API_ENDPOINTS.FILES.USER.DOWNLOAD;
+    const { data } = await apiClient.get<Blob>(endpoint, {
+      params: { path },
+      responseType: 'blob',
+    });
+    return data.text();
+  },
+
+  /** Получить файл как Blob (для предпросмотра изображений) */
+  readFileAsBlob: async (path: string, isAdmin: boolean): Promise<Blob> => {
+    const endpoint = isAdmin
+      ? API_ENDPOINTS.FILES.ADMIN.DOWNLOAD
+      : API_ENDPOINTS.FILES.USER.DOWNLOAD;
+    const { data } = await apiClient.get<Blob>(endpoint, {
+      params: { path },
+      responseType: 'blob',
+    });
+    return data;
+  },
+
   /** Скачать файл */
   downloadFile: async (path: string, isAdmin: boolean): Promise<void> => {
     const endpoint = isAdmin
@@ -78,6 +102,11 @@ export const filesApi = {
     });
     const fileName = path.split('/').pop() ?? 'download';
     triggerDownload(data, fileName);
+  },
+
+  /** Удалить несколько файлов/директорий */
+  deleteItems: async (paths: string[], isAdmin: boolean): Promise<void> => {
+    await Promise.all(paths.map((p) => filesApi.deleteItem(p, isAdmin)));
   },
 
   /** Скачать директорию как ZIP */

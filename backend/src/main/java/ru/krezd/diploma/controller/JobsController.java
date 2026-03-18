@@ -6,12 +6,16 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import ru.krezd.diploma.dto.job.BatchJobSubmitRequest;
 import ru.krezd.diploma.dto.slurm.SlurmOpenapiResponse;
+import ru.krezd.diploma.dto.slurm.account.SlurmAssociationsResponseDTO;
+import ru.krezd.diploma.dto.slurm.job.JobUsageStatsDTO;
+import ru.krezd.diploma.dto.slurm.job.SlurmDbJobsResponseDTO;
 import ru.krezd.diploma.dto.slurm.job.SlurmJobDescMsg;
-import ru.krezd.diploma.dto.slurm.job.SlurmJobSubmitRequest;
 import ru.krezd.diploma.dto.slurm.job.SlurmJobSubmitResponse;
 import ru.krezd.diploma.dto.slurm.job.SlurmJobsResponseDTO;
 import ru.krezd.diploma.service.JobsService;
+import ru.krezd.diploma.service.SlurmAccountService;
 
 /**
  * Контроллер для управления заданиями SLURM.
@@ -28,6 +32,7 @@ import ru.krezd.diploma.service.JobsService;
 public class JobsController {
 
     private final JobsService jobsService;
+    private final SlurmAccountService slurmAccountService;
 
     // ── Чтение ────────────────────────────────────────────────────────────────
 
@@ -82,10 +87,10 @@ public class JobsController {
      */
     @PostMapping("/job/submit")
     public ResponseEntity<SlurmJobSubmitResponse> submitJob(
-            @RequestBody SlurmJobSubmitRequest request,
+            @RequestBody BatchJobSubmitRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        SlurmJobSubmitResponse response = jobsService.submitJob(request);
+        SlurmJobSubmitResponse response = jobsService.submitJob(request, userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 
@@ -116,6 +121,90 @@ public class JobsController {
         return ResponseEntity.ok(response);
     }
 
+    // ── Архивные задачи (slurmdbd) ────────────────────────────────────────────
+
+    /**
+     * Возвращает завершённые задания из slurmdbd. Только для администраторов.
+     */
+    @GetMapping("/jobs/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SlurmDbJobsResponseDTO> getArchivedJobs(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam(required = false) String state) {
+
+        return ResponseEntity.ok(jobsService.getArchivedJobs(startTime, endTime, state));
+    }
+
+    /**
+     * Возвращает завершённые задания текущего пользователя из slurmdbd.
+     */
+    @GetMapping("/user/jobs/history")
+    public ResponseEntity<SlurmDbJobsResponseDTO> getUserArchivedJobs(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return ResponseEntity.ok(
+                jobsService.getUserArchivedJobs(userDetails.getUsername(), startTime, endTime)
+        );
+    }
+
+    /**
+     * Возвращает архивное задание по идентификатору из slurmdbd.
+     */
+    @GetMapping("/job/{jobId}/history")
+    public ResponseEntity<SlurmDbJobsResponseDTO> getArchivedJobById(@PathVariable Long jobId) {
+        return ResponseEntity.ok(jobsService.getArchivedJobById(jobId));
+    }
+
+    // ── Usage статистика ──────────────────────────────────────────────────────
+
+    /**
+     * Возвращает агрегированную usage-статистику по всем заданиям.
+     * Только для администраторов.
+     *
+     * @param startTime начало периода (unix timestamp или строка даты, опционально)
+     * @param endTime   конец периода (опционально)
+     */
+    @GetMapping("/jobs/usage")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<JobUsageStatsDTO> getJobUsageStats(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime) {
+
+        return ResponseEntity.ok(jobsService.getJobUsageStats(startTime, endTime));
+    }
+
+    /**
+     * Возвращает usage-статистику по заданиям текущего пользователя.
+     */
+    @GetMapping("/user/jobs/usage")
+    public ResponseEntity<JobUsageStatsDTO> getUserJobUsageStats(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return ResponseEntity.ok(
+                jobsService.getUserJobUsageStats(userDetails.getUsername(), startTime, endTime)
+        );
+    }
+
+    // ── Ассоциации текущего пользователя ─────────────────────────────────────
+
+    /**
+     * Возвращает ассоциации текущего пользователя (аккаунты + QOS).
+     * Нужно для заполнения выпадающих списков при создании задания.
+     */
+    @GetMapping("/user/associations")
+    public ResponseEntity<SlurmAssociationsResponseDTO> getUserAssociations(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return ResponseEntity.ok(
+                slurmAccountService.getAssociations(null, userDetails.getUsername())
+        );
+    }
+
     // ── Обновление задания ────────────────────────────────────────────────────
 
     /**
@@ -126,11 +215,16 @@ public class JobsController {
      * @param request новые параметры задания
      */
     @PostMapping("/job/{jobId}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SlurmOpenapiResponse> updateJob(
-            @PathVariable Long jobId,
-            @RequestBody SlurmJobDescMsg request) {
+            @PathVariable Integer jobId,
+            @RequestBody SlurmJobDescMsg request,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        return ResponseEntity.ok(jobsService.updateJob(jobId, request));
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        return ResponseEntity.ok(
+                jobsService.updateJob(jobId, request, userDetails.getUsername(), isAdmin)
+        );
     }
 }

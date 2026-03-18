@@ -1,5 +1,6 @@
 package ru.krezd.diploma.dto.slurm.job;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

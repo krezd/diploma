@@ -13,6 +13,10 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { FilesPage } from '@/pages/FilesPage';
 import { ClusterPage } from '@/pages/ClusterPage';
 import { UsersPage } from '@/pages/UsersPage';
+import { JobsPage } from '@/pages/JobsPage';
+import { JobNewPage } from '@/pages/JobNewPage';
+import { JobTemplatesPage } from '@/pages/JobTemplatesPage';
+import { SoftwarePage } from '@/pages/SoftwarePage';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ProtectedRoute } from '@/components/common/ProtectedRoute';
 import type { AuthTokens } from '@/types/auth.types';
@@ -87,10 +91,12 @@ function App() {
               >
                 <Route index element={<DashboardPage />} />
                 <Route path="files" element={<FilesPage />} />
-                {/* Следующие этапы */}
-                <Route path="jobs" element={<Navigate to="/" replace />} />
+                <Route path="jobs" element={<JobsPage />} />
+                <Route path="jobs/new" element={<JobNewPage />} />
+                <Route path="jobs/templates" element={<JobTemplatesPage />} />
                 <Route path="cluster" element={<ClusterPage />} />
                 <Route path="users" element={<UsersPage />} />
+                <Route path="software" element={<SoftwarePage />} />
                 <Route path="profile" element={<Navigate to="/" replace />} />
               </Route>
               <Route path="*" element={<Navigate to="/" replace />} />

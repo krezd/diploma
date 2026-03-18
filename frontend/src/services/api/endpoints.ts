@@ -16,16 +16,29 @@ export const API_ENDPOINTS = {
     SETTINGS_REGISTRATION: '/users/settings/registration',
   },
   SLURM: {
+    // Активные задания (slurmctld)
     JOBS: '/slurm/jobs',
     USER_JOBS: '/slurm/user/jobs',
     JOB: (id: number) => `/slurm/job/${id}`,
     JOB_SUBMIT: '/slurm/job/submit',
+    JOB_CANCEL: (id: number) => `/slurm/job/${id}`,
+    JOB_UPDATE: (id: number) => `/slurm/job/${id}`,
+    // Архивные задания (slurmdbd)
+    JOBS_HISTORY: '/slurm/jobs/history',
+    USER_JOBS_HISTORY: '/slurm/user/jobs/history',
+    JOB_HISTORY: (id: number) => `/slurm/job/${id}/history`,
+    // Usage статистика
+    JOBS_USAGE: '/slurm/jobs/usage',
+    USER_JOBS_USAGE: '/slurm/user/jobs/usage',
+    USER_ASSOCIATIONS: '/slurm/user/associations',
+    // Узлы
     NODES: '/slurm/nodes',
     NODE: (name: string) => `/slurm/node/${name}`,
     PARTITIONS: '/slurm/partitions',
     PARTITION: (name: string) => `/slurm/partition/${name}`,
     DIAG: '/slurm/diag',
     PING: '/slurm/ping',
+    // Аккаунты и ассоциации
     ACCOUNTS: '/slurm/accounts',
     ACCOUNT: (name: string) => `/slurm/accounts/${name}`,
     ASSOCIATIONS: '/slurm/associations',
@@ -35,6 +48,22 @@ export const API_ENDPOINTS = {
     TRES: '/slurm/tres',
     ASSOCIATIONS_QOS: '/slurm/associations/qos',
     ASSOCIATIONS_LIMITS: '/slurm/associations/limits',
+  },
+  SOFTWARE: {
+    LIST: '/software',
+    SCAN: '/software/scan',
+    REGISTER: '/software/register',
+    UPLOAD: '/software/upload',
+    UPDATE: (id: number) => `/software/${id}`,
+    MODULEFILE: (id: number) => `/software/${id}/modulefile`,
+    STATUS: (id: number) => `/software/${id}/status`,
+    DELETE: (id: number) => `/software/${id}`,
+  },
+  JOB_TEMPLATES: {
+    LIST: '/jobs/templates',
+    CREATE: '/jobs/templates',
+    UPDATE: (id: number) => `/jobs/templates/${id}`,
+    DELETE: (id: number) => `/jobs/templates/${id}`,
   },
   FILES: {
     // Эндпоинты для любого авторизованного пользователя (путь в рамках своей папки)

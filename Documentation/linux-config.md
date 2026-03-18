@@ -54,27 +54,40 @@
     sudo apt update
     sudo apt install -y nfs-kernel-server nfs-common
     sudo mkdir -p /shared/workspace
+    sudo mkdir -p /shared/software
     sudo chmod 777 /shared/workspace
+    sudo chmod 777 /shared/software
     sudo nano /etc/exports
-    /shared/workspace *(rw,sync,all_squash,no_subtree_check,root_squash,anonuid=1001,anongid=1001)
+    /shared/workspace *(rw,sync,no_subtree_check,no_root_squash)
+    /shared/software *(rw,sync,no_subtree_check,no_root_squash)
     sudo exportfs -ra
     sudo systemctl enable --now nfs-server
     sudo systemctl restart nfs-server
     sudo systemctl status nfs-server
     showmount -e localhost
+    sudo apt install -y environment-modules
+    sudo mkdir -p /shared/software/modules
+    sudo chmod 777 /shared/software/modules
+    echo "export MODULEPATH=/shared/software/modules:\$MODULEPATH" | sudo tee -a /etc/profile.d/modules.sh
+    source /etc/profile.d/modules.sh
 
  Compute-node
 
     sudo apt update
     sudo apt install -y nfs-common
     sudo mkdir -p /shared/workspace
+    sudo mkdir -p /shared/software
     sudo mount -t nfs 192.168.0.18:/shared/workspace /shared/workspace
+    sudo mount -t nfs 192.168.0.18:/shared/software /shared/software
     df -h | grep shared
     mount | grep nfs
     ls -la /shared/workspace/
     sudo nano /etc/fstab
     192.168.0.18:/shared/workspace /shared/workspace nfs rw,hard,intr,noatime,vers=3 0 0
     sudo mount -a
+    sudo apt install -y environment-modules 
+    echo "export MODULEPATH=/shared/software/modules:\$MODULEPATH" | sudo tee -a /etc/profile.d/modules.sh
+    source /etc/profile.d/modules.sh
 
  Проверка создания файлов и т.д. 
 
@@ -355,16 +368,18 @@
     sudo setfacl -m u:diploma-app:r /var/spool/slurm/ctld/jwt_hs256.key
     sudo -u diploma-app cat /var/spool/slurm/ctld/jwt_hs256.key > /dev/null && echo "Доступ есть" || echo "Нет доступа"
     sudo visudo -f /etc/sudoers.d/diploma-app
-    diploma-app ALL=(ALL) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/bin/getent, /usr/bin/id, /usr/bin/passwd, /bin/chown, /bin/chmod, /bin/mkdir, /bin/rm, /bin/cp, /bin/mv, /usr/bin/sacctmgr
+    diploma-app ALL=(ALL) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/bin/getent, /usr/bin/id, /usr/bin/passwd, /bin/chown, /bin/chmod, /bin/mkdir, /bin/rm, /bin/cp, /bin/mv, /usr/bin/sacctmgr, /usr/bin/sbatch
     sudo chmod 440 /etc/sudoers.d/diploma-app
     sudo mkdir -p /shared/workspace/diploma-app
     sudo chown diploma-app:diploma-app /shared/workspace/diploma-app
-    sudo chmod 755 /shared/workspace/diploma-app
+    sudo chmod 777 /shared/workspace/diploma-app # Для безопасности лучше 755 и дорабатывать логику с правами slurm на nfs
     sudo apt update
     sudo apt install -y openjdk-21-jdk
     sudo mkdir -p /opt/diploma-app
     sudo chown diploma-app:diploma-app /opt/diploma-app
-    sudo nano /etc/systemd/system/diploma-app-debug.service
+    sudo usermod -a -G diploma-app slurm
+    sudo usermod -a -G diploma-app slurmrestd
+    sudo nano /etc/systemd/system/diploma-app.service
     #
     [Unit]
     Description=Diploma Spring Boot Application
@@ -375,6 +390,7 @@
     Type=simple
     User=diploma-app
     Group=diploma-app
+    UMask=000
     WorkingDirectory=/opt/diploma-app
     Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
     

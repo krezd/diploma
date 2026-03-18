@@ -120,6 +120,14 @@ jwt.refreshTtl=12000
 | GET | `/api/slurm/jobs` | ADMIN |
 | GET | `/api/slurm/user/jobs` | Авторизован |
 | GET | `/api/slurm/job/{jobId}` | Авторизован |
+| POST | `/api/slurm/job/submit` | Авторизован |
+| DELETE | `/api/slurm/job/{jobId}` | Авторизован (своя) / ADMIN |
+| POST | `/api/slurm/job/{jobId}` | ADMIN |
+| GET | `/api/slurm/jobs/history` | ADMIN |
+| GET | `/api/slurm/user/jobs/history` | Авторизован |
+| GET | `/api/slurm/job/{jobId}/history` | Авторизован |
+| GET | `/api/slurm/jobs/usage` | ADMIN |
+| GET | `/api/slurm/user/jobs/usage` | Авторизован |
 | GET | `/api/slurm/nodes` | Авторизован |
 | GET | `/api/slurm/node/{nodeName}` | Авторизован |
 | DELETE | `/api/slurm/node/{nodeName}` | ADMIN |
