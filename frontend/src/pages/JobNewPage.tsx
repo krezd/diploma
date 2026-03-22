@@ -50,6 +50,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobsApi } from '@/services/api/jobsApi';
 import { jobTemplateApi } from '@/services/api/jobTemplateApi';
 import apiClient from '@/services/api/client';
+import type { AxiosError } from 'axios';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
 import { useAuthStore } from '@/stores/authStore';
 import type { BatchJobSubmitRequest } from '@/types/job.types';
@@ -339,7 +340,7 @@ interface ConfirmDialogProps {
 }
 
 const ConfirmDialog = ({ open, onClose, onConfirm, params, mode, loading }: ConfirmDialogProps) => {
-  const script = buildPreviewScript(params);
+  const script = mode === 'SCRIPT' ? (params.script_body ?? '') : buildPreviewScript(params);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
       PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
@@ -384,7 +385,6 @@ const ConfirmDialog = ({ open, onClose, onConfirm, params, mode, loading }: Conf
 
 // ─── Главная страница ─────────────────────────────────────────────────────────
 
-const MAIL_TYPE_OPTIONS = ['NONE', 'BEGIN', 'END', 'FAIL', 'REQUEUE', 'ALL', 'TIME_LIMIT', 'TIME_LIMIT_90', 'TIME_LIMIT_80'];
 
 const DEFAULT_PARAMS: BatchJobSubmitRequest = { script_body: '#!/bin/bash\n\n# Ваши команды здесь\n' };
 
@@ -496,8 +496,13 @@ export const JobNewPage = () => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] });
       navigate('/jobs', { state: { submitted: data?.job_id } });
     },
-    onError: (err: Error) => {
-      setSubmitError(err.message ?? 'Ошибка при отправке задания');
+    onError: (err: unknown) => {
+      const axiosErr = err as AxiosError<string | { message?: string }>;
+      const data = axiosErr.response?.data;
+      let msg = 'Ошибка при отправке задания';
+      if (typeof data === 'string' && data) msg = data;
+      else if (data && typeof data === 'object' && data.message) msg = data.message;
+      setSubmitError(msg);
       setConfirmOpen(false);
     },
   });
@@ -736,49 +741,6 @@ export const JobNewPage = () => {
                             placeholder="infiniband"
                             value={params.constraints ?? ''}
                             onChange={(e) => set('constraints', e.target.value || undefined)} />
-                        </Grid>
-                      </Grid>
-                    </AccordionDetails>
-                  </Accordion>
-
-                  {/* Уведомления */}
-                  <Accordion sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', '&:before': { display: 'none' } }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Уведомления</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <TextField fullWidth size="small" type="email"
-                            label={<>Email <FieldHelp text="--mail-user: адрес для получения уведомлений о статусе задания." /></>}
-                            placeholder="user@example.com"
-                            value={params.mail_user ?? ''}
-                            onChange={(e) => set('mail_user', e.target.value || undefined)} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <FormControl fullWidth size="small" disabled={!params.mail_user}>
-                            <InputLabel>
-                              События <FieldHelp text="--mail-type: когда слать уведомления. ALL = при любом событии." />
-                            </InputLabel>
-                            <Select
-                              multiple
-                              value={params.mail_type ?? []}
-                              label="События"
-                              onChange={(e) => {
-                                const v = e.target.value as string[];
-                                set('mail_type', v.length > 0 ? v : undefined);
-                              }}
-                              renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                  {(selected as string[]).map((v) => <Chip key={v} label={v} size="small" />)}
-                                </Box>
-                              )}
-                            >
-                              {MAIL_TYPE_OPTIONS.map((opt) => (
-                                <MenuItem key={opt} value={opt}>{opt}</MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
                         </Grid>
                       </Grid>
                     </AccordionDetails>

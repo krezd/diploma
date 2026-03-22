@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import { Sidebar, SIDEBAR_WIDTH, SIDEBAR_COLLAPSED_WIDTH } from './Sidebar';
 import { useUiStore } from '@/stores/uiStore';
@@ -24,6 +24,21 @@ export const AppLayout = () => {
       >
         <Outlet />
       </Box>
+      <Typography
+        variant="caption"
+        sx={{
+          position: 'fixed',
+          bottom: 10,
+          right: 14,
+          color: 'text.disabled',
+          fontSize: 11,
+          letterSpacing: 0.5,
+          userSelect: 'none',
+          pointerEvents: 'none',
+        }}
+      >
+        prod. krezd
+      </Typography>
     </Box>
   );
 };

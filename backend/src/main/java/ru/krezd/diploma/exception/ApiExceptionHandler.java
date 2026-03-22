@@ -30,5 +30,10 @@ public class ApiExceptionHandler {
     public ResponseEntity<String> handleIO(IOException e) {
         return ResponseEntity.status(500).body("File system error");
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntime(RuntimeException e) {
+        return ResponseEntity.status(500).body(e.getMessage());
+    }
 }
 

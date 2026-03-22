@@ -16,10 +16,6 @@ import java.util.Date;
 @Component
 public class SlurmJwtGenerator {
 
-    //TODO Генератор должен создавать jwt токен для пользователя через /jwt_hs256.key
-    //TODO Далее интерцептор перехватывает запрос к slurmrestd и проверят токен на актуальность
-
-
     @Value("${slurm.jwt.key-path:/var/spool/slurm/ctld/jwt_hs256.key}")
     private String jwtKeyPath;
     @Value("${slurm.token.lifetime}")

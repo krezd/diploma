@@ -296,6 +296,8 @@
       - "--innodb-buffer-pool-size=2G"
       - "--innodb-lock-wait-timeout=900"
     
+    
+
     volumes:
     pgdata:
     mysql_slurm_data:
@@ -433,5 +435,58 @@
     sudo systemctl status diploma-app
     sudo journalctl -u diploma-app -f
 
+## 8. Развертывание фронтенда (Docker + nginx)
 
-# Установить slurmdbd, захостить mysql, развернуть postgres для backend и автоматизировать настройку с помощью ansible
+ Master node
+
+Фронтенд собирается в Docker через многоэтапный билд (Node.js → nginx).
+nginx раздаёт статику и проксирует `/api/*` на бэкенд (порт 8080 на хосте).
+Бэкенд менять не нужно — CORS уже разрешает `http://192.168.*`.
+
+### Структура файлов фронтенда
+
+    frontend/
+    ├── Dockerfile        # многоэтапная сборка: node:20-alpine → nginx:alpine
+    ├── nginx.conf        # SPA-роутинг + proxy_pass /api/ → :8080
+    └── .dockerignore     # исключает node_modules и dist из контекста сборки
+
+### nginx.conf
+
+    server {
+        listen 80;
+        server_name _;
+        root /usr/share/nginx/html;
+        index index.html;
+
+        # React SPA — все неизвестные пути → index.html
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        # Проксирование API на бэкенд-сервис на хосте (:8080)
+        location /api/ {
+            proxy_pass http://host.docker.internal:8080;
+            proxy_http_version 1.1;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_read_timeout 60s;
+        }
+    }
+
+### Запуск через docker-compose-v2.0.yml
+
+    # Находясь в папке backend/
+    docker compose -f docker-compose-v2.0.yml up -d --build frontend
+
+    # Пересборка после изменений в коде фронтенда
+    docker compose -f docker-compose-v2.0.yml build frontend
+    docker compose -f docker-compose-v2.0.yml up -d frontend
+
+    # Логи
+    docker logs diploma-frontend -f
+
+    # Проверка (должен вернуть JSON)
+    curl http://localhost/api/slurm/nodes
+
+Приложение доступно на http://192.168.0.18 (порт 80).

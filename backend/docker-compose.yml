@@ -50,5 +50,16 @@ services:
       - ./data:/data
     restart: unless-stopped
 
+  frontend:
+    build: ../frontend
+    container_name: diploma-frontend
+    ports:
+      - "80:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - diploma_app
+
 volumes:
   pgdata:

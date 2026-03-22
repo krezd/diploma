@@ -41,6 +41,17 @@ services:
       - "innodb-buffer-pool-size=256M"
       - "innodb-lock-wait-timeout=900"
 
+  frontend:
+    build: ../frontend
+    container_name: diploma-frontend
+    ports:
+      - "80:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    networks:
+      - diploma_app
+
 volumes:
   pgdata:
   mysql_slurm_data:
