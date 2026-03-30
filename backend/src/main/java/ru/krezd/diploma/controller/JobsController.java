@@ -8,14 +8,22 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import ru.krezd.diploma.dto.job.BatchJobSubmitRequest;
 import ru.krezd.diploma.dto.slurm.SlurmOpenapiResponse;
+
+import ru.krezd.diploma.dto.slurm.account.SlurmAssociationDTO;
 import ru.krezd.diploma.dto.slurm.account.SlurmAssociationsResponseDTO;
 import ru.krezd.diploma.dto.slurm.job.JobUsageStatsDTO;
 import ru.krezd.diploma.dto.slurm.job.SlurmDbJobsResponseDTO;
 import ru.krezd.diploma.dto.slurm.job.SlurmJobDescMsg;
 import ru.krezd.diploma.dto.slurm.job.SlurmJobSubmitResponse;
 import ru.krezd.diploma.dto.slurm.job.SlurmJobsResponseDTO;
+import ru.krezd.diploma.dto.slurm.qos.SlurmQosListResponseDTO;
 import ru.krezd.diploma.service.JobsService;
 import ru.krezd.diploma.service.SlurmAccountService;
+import ru.krezd.diploma.service.SlurmQosService;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Контроллер для управления заданиями SLURM.
@@ -33,6 +41,7 @@ public class JobsController {
 
     private final JobsService jobsService;
     private final SlurmAccountService slurmAccountService;
+    private final SlurmQosService slurmQosService;
 
     // ── Чтение ────────────────────────────────────────────────────────────────
 
@@ -203,6 +212,40 @@ public class JobsController {
         return ResponseEntity.ok(
                 slurmAccountService.getAssociations(null, userDetails.getUsername())
         );
+    }
+
+    /**
+     * Возвращает account-level ассоциации для аккаунтов пользователя.
+     * Содержит групповые лимиты (GRP*) аккаунта, в котором состоит пользователь.
+     */
+    @GetMapping("/user/account-associations")
+    public ResponseEntity<SlurmAssociationsResponseDTO> getUserAccountAssociations(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        return ResponseEntity.ok(
+                slurmAccountService.getUserAccountAssociations(userDetails.getUsername())
+        );
+    }
+
+    /**
+     * Возвращает детали QOS, доступных текущему пользователю через его ассоциации.
+     * Содержит лимиты на задание, на пользователя и групповые лимиты каждого QOS.
+     */
+    @GetMapping("/user/qos")
+    public ResponseEntity<SlurmQosListResponseDTO> getUserQos(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        SlurmAssociationsResponseDTO assocs = slurmAccountService
+                .getAssociations(null, userDetails.getUsername());
+
+        Set<String> allowedQos = (assocs != null && assocs.getAssociations() != null)
+                ? assocs.getAssociations().stream()
+                        .filter(a -> a.getQos() != null)
+                        .flatMap(a -> a.getQos().stream())
+                        .collect(Collectors.toSet())
+                : Set.of();
+
+        return ResponseEntity.ok(slurmQosService.getQosListByNames(allowedQos));
     }
 
     // ── Обновление задания ────────────────────────────────────────────────────

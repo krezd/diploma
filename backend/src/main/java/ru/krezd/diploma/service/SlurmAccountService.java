@@ -131,6 +131,36 @@ public class SlurmAccountService {
         return response;
     }
 
+    /**
+     * Возвращает account-level ассоциации для аккаунтов, в которых состоит пользователь.
+     * Используется для отображения групповых лимитов аккаунта на дашборде.
+     */
+    public SlurmAssociationsResponseDTO getUserAccountAssociations(String username) {
+        SlurmAssociationsResponseDTO userAssocs = getAssociations(null, username);
+
+        Set<String> accountNames = (userAssocs != null && userAssocs.getAssociations() != null)
+                ? userAssocs.getAssociations().stream()
+                        .filter(a -> a.getUser() != null && !a.getUser().isBlank())
+                        .map(SlurmAssociationDTO::getAccount)
+                        .filter(a -> a != null && !a.isBlank())
+                        .collect(Collectors.toSet())
+                : Set.of();
+
+        List<SlurmAssociationDTO> accountAssocs = new ArrayList<>();
+        for (String account : accountNames) {
+            SlurmAssociationsResponseDTO accResp = getAssociations(account, null);
+            if (accResp != null && accResp.getAssociations() != null) {
+                accResp.getAssociations().stream()
+                        .filter(a -> a.getUser() == null || a.getUser().isBlank())
+                        .forEach(accountAssocs::add);
+            }
+        }
+
+        SlurmAssociationsResponseDTO result = new SlurmAssociationsResponseDTO();
+        result.setAssociations(accountAssocs);
+        return result;
+    }
+
     // ── Ассоциации: WRITE (CLI) ──────────────────────────────────────────────
 
     public void createAssociation(String username, String accountName) {

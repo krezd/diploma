@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -73,6 +74,21 @@ public class SlurmQosService {
             log.error("Не удалось получить QOS через sacctmgr: {}", e.getMessage());
             throw new RuntimeException("Не удалось получить список QOS: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Возвращает QOS, отфильтрованные по набору имён.
+     * Используется для отображения лимитов QOS конкретного пользователя.
+     */
+    public SlurmQosListResponseDTO getQosListByNames(Set<String> names) {
+        if (names == null || names.isEmpty()) {
+            return new SlurmQosListResponseDTO(List.of());
+        }
+        SlurmQosListResponseDTO all = getQosList();
+        List<SlurmQosSummaryDTO> filtered = all.getQos().stream()
+                .filter(q -> q.getName() != null && names.contains(q.getName()))
+                .collect(Collectors.toList());
+        return new SlurmQosListResponseDTO(filtered);
     }
 
     /** Парсит вывод {@code sacctmgr -P show qos} в список DTO. */

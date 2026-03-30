@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Grid, Chip, CircularProgress, Alert,
   Table, TableHead, TableBody, TableRow, TableCell, Button, Divider,
-  LinearProgress, Tooltip,
+  LinearProgress, Tooltip, Tabs, Tab,
 } from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -14,6 +14,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import SendIcon from '@mui/icons-material/Send';
 import MemoryIcon from '@mui/icons-material/Memory';
+import LockIcon from '@mui/icons-material/Lock';
 import { useQuery } from '@tanstack/react-query';
 import { jobsApi } from '@/services/api/jobsApi';
 import apiClient from '@/services/api/client';
@@ -21,6 +22,8 @@ import { API_ENDPOINTS } from '@/services/api/endpoints';
 import { useAuthStore } from '@/stores/authStore';
 import type { SlurmJobInfo, JobUsageStats } from '@/types/job.types';
 import { ACTIVE_JOB_STATES } from '@/types/job.types';
+import type { SlurmAssociationsResponse, SlurmAssociation } from '@/types/slurm-account.types';
+import type { SlurmQosListResponse, SlurmQos } from '@/types/slurm-qos.types';
 
 // ─── Утилиты ────────────────────────────────────────────────────────────────
 
@@ -48,6 +51,233 @@ const getJobStateColor = (states: string[] | undefined): string => {
   if (['FAILED', 'NODE_FAIL', 'OUT_OF_MEMORY', 'TIMEOUT'].includes(s ?? '')) return '#ef4444';
   if (s === 'CANCELLED') return '#6b7280';
   return '#6b7280';
+};
+
+// ─── Утилиты для лимитов ──────────────────────────────────────────────────────
+
+const fmtWallTime = (minutes?: number | null): string => {
+  if (minutes == null) return '∞';
+  if (minutes === -1) return '∞';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h}ч ${m}м`;
+  if (h > 0) return `${h}ч`;
+  return `${m}м`;
+};
+
+const parseTresMemory = (val: string): string => {
+  const match = val.match(/^(\d+(?:\.\d+)?)([MGTP]?)$/i);
+  if (!match) return val;
+  const num = parseFloat(match[1]);
+  const unit = (match[2] || '').toUpperCase();
+  if (unit === 'G') return `${num} ГБ`;
+  if (unit === 'T') return `${num} ТБ`;
+  return num >= 1024 ? `${(num / 1024).toFixed(0)} ГБ` : `${num} МБ`;
+};
+
+interface TresItem { label: string; value: string; }
+
+const parseTresItems = (tres?: string | null): TresItem[] => {
+  if (!tres) return [];
+  return tres.split(',').flatMap((part) => {
+    const eqIdx = part.indexOf('=');
+    if (eqIdx < 0) return [];
+    const key = part.slice(0, eqIdx).trim();
+    const val = part.slice(eqIdx + 1).trim();
+    if (val === '0' || val === 'N') return []; // пропускаем нулевые/не заданные
+    if (key === 'cpu') return [{ label: 'CPU', value: val }];
+    if (key === 'mem') return [{ label: 'Память', value: parseTresMemory(val) }];
+    if (key === 'node') return [{ label: 'Узлы', value: val }];
+    if (key === 'gres/gpu' || key === 'gpu') return [{ label: 'GPU', value: val }];
+    if (key.startsWith('gres/')) return [{ label: key.slice(5).toUpperCase(), value: val }];
+    return [{ label: key, value: val }];
+  });
+};
+
+// ─── Строка лимита ────────────────────────────────────────────────────────────
+
+const LimitRow = ({ label, value, infinite = false }: { label: string; value: string | number | null | undefined; infinite?: boolean }) => {
+  if (value == null) return null;
+  const display = String(value);
+  const isInf = infinite || display === '∞' || display === '-1';
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.35 }}>
+      <Typography variant="caption" sx={{ color: 'text.secondary' }}>{label}</Typography>
+      <Typography variant="caption" sx={{ fontWeight: 600, color: isInf ? '#4ade80' : 'text.primary' }}>
+        {isInf ? '∞' : display}
+      </Typography>
+    </Box>
+  );
+};
+
+const TresSection = ({ label, tres }: { label: string; tres?: string | null }) => {
+  const items = parseTresItems(tres);
+  if (items.length === 0) return null;
+  return (
+    <>
+      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.75, mb: 0.35, fontStyle: 'italic' }}>
+        {label}:
+      </Typography>
+      {items.map(({ label: l, value: v }) => (
+        <Box key={l} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.35, pl: 1 }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>{l}</Typography>
+          <Typography variant="caption" sx={{ fontWeight: 600 }}>{v}</Typography>
+        </Box>
+      ))}
+    </>
+  );
+};
+
+// ─── Вкладка: личные лимиты ассоциации ───────────────────────────────────────
+
+const UserAssocTab = ({ associations }: { associations: SlurmAssociation[] }) => {
+  if (associations.length === 0) return (
+    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Нет данных</Typography>
+  );
+  return (
+    <>
+      {associations.map((assoc, i) => {
+        const { limits, qos, default: defQos, account } = assoc;
+        return (
+          <Box key={`${account ?? ''}-${i}`} sx={{
+            mb: 1.5, pb: 1.5,
+            borderBottom: i < associations.length - 1 ? '1px solid #2d3748' : 'none',
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: 'monospace' }}>
+                {account ?? '—'}
+              </Typography>
+              {defQos?.qos && (
+                <Chip label={`QOS: ${defQos.qos}`} size="small"
+                  sx={{ fontSize: 10, height: 18, bgcolor: '#1e2844', color: '#60a5fa' }} />
+              )}
+            </Box>
+            {(qos?.length ?? 0) > 0 && (
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75 }}>
+                {qos!.map((q) => (
+                  <Chip key={q} label={q} size="small" variant="outlined"
+                    sx={{ fontSize: 10, height: 18, borderColor: '#2d3748', color: 'text.secondary' }} />
+                ))}
+              </Box>
+            )}
+            {!limits ? (
+              <Typography variant="caption" sx={{ color: '#4ade80' }}>Лимиты не установлены</Typography>
+            ) : (
+              <>
+                <LimitRow label="Макс. заданий" value={limits.maxJobs ?? limits.grpJobs} />
+                <LimitRow label="Макс. в очереди" value={limits.maxSubmitJobs ?? limits.grpSubmitJobs} />
+                <LimitRow label="Макс. время" value={fmtWallTime(limits.maxWallMinutes ?? limits.grpWallMinutes)} />
+                <TresSection label="На задание" tres={limits.maxTresPerJob} />
+                <TresSection label="На узел" tres={limits.maxTresPerNode} />
+                {limits.fairshare != null && limits.fairshare > 0 && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Fairshare</Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#f59e0b' }}>
+                      {limits.fairshare}
+                    </Typography>
+                  </Box>
+                )}
+              </>
+            )}
+          </Box>
+        );
+      })}
+    </>
+  );
+};
+
+// ─── Вкладка: лимиты аккаунта ────────────────────────────────────────────────
+
+const AccountAssocTab = ({ associations }: { associations: SlurmAssociation[] }) => {
+  if (associations.length === 0) return (
+    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Нет данных</Typography>
+  );
+  return (
+    <>
+      {associations.map((assoc, i) => {
+        const { limits, account, qos, default: defQos } = assoc;
+        return (
+          <Box key={`${account ?? ''}-${i}`} sx={{
+            mb: 1.5, pb: 1.5,
+            borderBottom: i < associations.length - 1 ? '1px solid #2d3748' : 'none',
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: 'monospace' }}>
+                {account ?? '—'}
+              </Typography>
+              {defQos?.qos && (
+                <Chip label={`QOS: ${defQos.qos}`} size="small"
+                  sx={{ fontSize: 10, height: 18, bgcolor: '#1e2844', color: '#60a5fa' }} />
+              )}
+            </Box>
+            {(qos?.length ?? 0) > 0 && (
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75 }}>
+                {qos!.map((q) => (
+                  <Chip key={q} label={q} size="small" variant="outlined"
+                    sx={{ fontSize: 10, height: 18, borderColor: '#2d3748', color: 'text.secondary' }} />
+                ))}
+              </Box>
+            )}
+            {!limits ? (
+              <Typography variant="caption" sx={{ color: '#4ade80' }}>Лимиты не установлены</Typography>
+            ) : (
+              <>
+                <LimitRow label="Задания (группа)" value={limits.grpJobs} />
+                <LimitRow label="В очереди (группа)" value={limits.grpSubmitJobs} />
+                <LimitRow label="Wall-time (группа)" value={fmtWallTime(limits.grpWallMinutes)} />
+                <TresSection label="Бюджет TRES" tres={limits.grpTres} />
+                <TresSection label="TRES-минуты" tres={limits.grpTresMins} />
+              </>
+            )}
+          </Box>
+        );
+      })}
+    </>
+  );
+};
+
+// ─── Вкладка: доступные QOS ───────────────────────────────────────────────────
+
+const QosTab = ({ qosList, defaultQosNames }: { qosList: SlurmQos[]; defaultQosNames: Set<string> }) => {
+  if (qosList.length === 0) return (
+    <Typography variant="caption" sx={{ color: 'text.secondary' }}>Нет доступных QOS</Typography>
+  );
+  return (
+    <>
+      {qosList.map((qos, i) => (
+        <Box key={qos.name} sx={{
+          mb: 1.5, pb: 1.5,
+          borderBottom: i < qosList.length - 1 ? '1px solid #2d3748' : 'none',
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: 'monospace' }}>
+              {qos.name}
+            </Typography>
+            {defaultQosNames.has(qos.name) && (
+              <Chip label="default" size="small" sx={{ fontSize: 10, height: 18, bgcolor: '#1e3a1e', color: '#4ade80' }} />
+            )}
+            {qos.priority != null && qos.priority > 0 && (
+              <Typography variant="caption" sx={{ color: 'text.secondary', ml: 'auto' }}>
+                p:{qos.priority}
+              </Typography>
+            )}
+          </Box>
+          {qos.description && (
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5, fontStyle: 'italic' }}>
+              {qos.description}
+            </Typography>
+          )}
+          <LimitRow label="Задания/польз." value={qos.maxJobsPerUser} />
+          <LimitRow label="В очереди/польз." value={qos.maxSubmitJobsPerUser} />
+          <LimitRow label="Макс. время задания" value={fmtWallTime(qos.maxWallDurationPerJobMinutes)} />
+          <TresSection label="На задание" tres={qos.maxTresPerJob} />
+          <TresSection label="На узел" tres={qos.maxTresPerNode} />
+          {qos.grpJobs != null && <LimitRow label="Задания (группа QOS)" value={qos.grpJobs} />}
+          {qos.grpTres && <TresSection label="Бюджет QOS" tres={qos.grpTres} />}
+        </Box>
+      ))}
+    </>
+  );
 };
 
 // ─── Карточка метрики ─────────────────────────────────────────────────────────
@@ -139,6 +369,7 @@ export const DashboardPage = () => {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === 'ADMIN';
+  const [limitsTab, setLimitsTab] = useState(0);
 
   // Активные задания
   const { data: jobsData, isLoading: jobsLoading, isError: jobsError } = useQuery({
@@ -154,12 +385,45 @@ export const DashboardPage = () => {
     staleTime: 60_000,
   });
 
+  // Ассоциации и лимиты текущего пользователя
+  const { data: assocsData } = useQuery<SlurmAssociationsResponse>({
+    queryKey: ['dashboard-user-associations'],
+    queryFn: () => apiClient.get<SlurmAssociationsResponse>(API_ENDPOINTS.SLURM.USER_ASSOCIATIONS).then((r) => r.data),
+    staleTime: 120_000,
+  });
+
+  // Лимиты аккаунтов пользователя (account-level ассоциации)
+  const { data: accountAssocsData } = useQuery<SlurmAssociationsResponse>({
+    queryKey: ['dashboard-account-associations'],
+    queryFn: () => apiClient.get<SlurmAssociationsResponse>(API_ENDPOINTS.SLURM.USER_ACCOUNT_ASSOCIATIONS).then((r) => r.data),
+    staleTime: 120_000,
+  });
+
+  // Детали QOS, доступных пользователю
+  const { data: userQosData } = useQuery<SlurmQosListResponse>({
+    queryKey: ['dashboard-user-qos'],
+    queryFn: () => apiClient.get<SlurmQosListResponse>(API_ENDPOINTS.SLURM.USER_QOS).then((r) => r.data),
+    staleTime: 120_000,
+  });
+
   // Узлы (только если авторизован)
   const { data: nodesData } = useQuery({
     queryKey: ['dashboard-nodes'],
     queryFn: () => apiClient.get<{ nodes: { state?: string[] }[] }>(API_ENDPOINTS.SLURM.NODES).then((r) => r.data),
     staleTime: 30_000,
   });
+
+  const userAssociations: SlurmAssociation[] = assocsData?.associations ?? [];
+  const accountAssociations: SlurmAssociation[] = accountAssocsData?.associations ?? [];
+  const userQosList: SlurmQos[] = userQosData?.qos ?? [];
+
+  // Набор default QOS имён для всех ассоциаций пользователя
+  const defaultQosNames = useMemo(() =>
+    new Set(userAssociations.map((a) => a.default?.qos).filter(Boolean) as string[]),
+    [userAssociations]
+  );
+
+  const hasLimitsData = userAssociations.length > 0 || accountAssociations.length > 0 || userQosList.length > 0;
 
   const jobs: SlurmJobInfo[] = jobsData?.jobs ?? [];
 
@@ -433,6 +697,36 @@ export const DashboardPage = () => {
               </Button>
             </Box>
           </Paper>
+
+          {/* Ресурсные лимиты */}
+          {hasLimitsData && (
+            <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, mb: 2 }}>
+              <Box sx={{ px: 2, pt: 2, pb: 0, display: 'flex', alignItems: 'center', gap: 1, borderBottom: '1px solid #2d3748' }}>
+                <LockIcon sx={{ fontSize: 15, color: 'text.secondary', mb: 1 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Ресурсные лимиты</Typography>
+              </Box>
+              <Tabs
+                value={limitsTab}
+                onChange={(_, v: number) => setLimitsTab(v)}
+                sx={{
+                  minHeight: 36,
+                  borderBottom: '1px solid #2d3748',
+                  '& .MuiTab-root': { fontSize: 11, minHeight: 36, py: 0.5, textTransform: 'none', color: 'text.secondary' },
+                  '& .Mui-selected': { color: 'primary.main' },
+                  '& .MuiTabs-indicator': { bgcolor: 'primary.main' },
+                }}
+              >
+                <Tab label={`Личные${userAssociations.length > 0 ? ` (${userAssociations.length})` : ''}`} />
+                <Tab label={`Аккаунт${accountAssociations.length > 0 ? ` (${accountAssociations.length})` : ''}`} />
+                <Tab label={`QOS${userQosList.length > 0 ? ` (${userQosList.length})` : ''}`} />
+              </Tabs>
+              <Box sx={{ p: 2, maxHeight: 320, overflowY: 'auto' }}>
+                {limitsTab === 0 && <UserAssocTab associations={userAssociations} />}
+                {limitsTab === 1 && <AccountAssocTab associations={accountAssociations} />}
+                {limitsTab === 2 && <QosTab qosList={userQosList} defaultQosNames={defaultQosNames} />}
+              </Box>
+            </Paper>
+          )}
 
           {/* Быстрые действия */}
           <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, mb: 2 }}>

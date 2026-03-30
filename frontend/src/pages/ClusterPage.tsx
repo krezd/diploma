@@ -38,6 +38,19 @@ import type { SlurmNode, SlurmTres, SlurmDbQos, SlurmClusterRec, UpdateNodeReque
 
 // ─── Утилиты ────────────────────────────────────────────────────────────────
 
+/** Парсит строку GRES узла и возвращает суммарное кол-во GPU (или null если нет). */
+const parseGpuCount = (gres?: string): number | null => {
+  if (!gres || gres === '(null)') return null;
+  let total = 0;
+  let found = false;
+  for (const part of gres.split(',')) {
+    // Форматы: "gpu:2", "gpu:a100:1", "gpu:a100:1(S:0)"
+    const m = part.match(/^gpu(?::\w+)?:(\d+)/i);
+    if (m) { total += parseInt(m[1], 10); found = true; }
+  }
+  return found ? total : null;
+};
+
 const formatMemory = (mb: number | undefined): string => {
   if (mb === undefined || mb === null) return '—';
   if (mb >= 1024) return `${(mb / 1024).toFixed(1)} GB`;
@@ -202,6 +215,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
   if (isError) return <Alert severity="error">Ошибка загрузки узлов</Alert>;
 
   const nodes = data?.nodes ?? [];
+  const hasGpu = nodes.some((n) => parseGpuCount(n.gres) !== null);
 
   return (
     <>
@@ -222,6 +236,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
               <TableCell>Партиции</TableCell>
               <TableCell>CPU</TableCell>
               <TableCell>Память</TableCell>
+              {hasGpu && <TableCell>GPU</TableCell>}
               {isAdmin && <TableCell align="right">Действия</TableCell>}
             </TableRow>
           </TableHead>
@@ -288,6 +303,28 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
                       </Typography>
                     </Box>
                   </TableCell>
+                  {hasGpu && (() => {
+                    const gpuTotal = parseGpuCount(node.gres);
+                    const gpuUsed = parseGpuCount(node.gres_used);
+                    return (
+                      <TableCell sx={{ minWidth: 100 }}>
+                        {gpuTotal !== null ? (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <LinearProgress
+                              variant="determinate"
+                              value={pct(gpuUsed ?? 0, gpuTotal)}
+                              sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#f59e0b' } }}
+                            />
+                            <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', minWidth: 36 }}>
+                              {gpuUsed ?? 0}/{gpuTotal}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: 'text.secondary' }}>—</Typography>
+                        )}
+                      </TableCell>
+                    );
+                  })()}
                   {isAdmin && (
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
@@ -332,7 +369,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
             })}
             {nodes.length === 0 && (
               <TableRow>
-                <TableCell colSpan={isAdmin ? 6 : 5} align="center" sx={{ py: 4, color: 'text.secondary' }}>
+                <TableCell colSpan={(isAdmin ? 6 : 5) + (hasGpu ? 1 : 0)} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                   Узлы не найдены
                 </TableCell>
               </TableRow>
@@ -781,6 +818,9 @@ export const ClusterPage = () => {
   const idleNodes = nodes.filter((n) => n.state?.includes('idle') || n.state?.some((s) => s.toUpperCase() === 'IDLE')).length;
   const drainNodes = nodes.filter((n) => n.state?.some((s) => s.toUpperCase().includes('DRAIN'))).length;
   const downNodes = nodes.filter((n) => n.state?.some((s) => s.toUpperCase() === 'DOWN')).length;
+  const totalGpu = nodes.reduce((s, n) => s + (parseGpuCount(n.gres) ?? 0), 0);
+  const usedGpu = nodes.reduce((s, n) => s + (parseGpuCount(n.gres_used) ?? 0), 0);
+  const hasClusterGpu = totalGpu > 0;
 
   const tabs = [
     { label: 'Узлы' },
@@ -834,6 +874,21 @@ export const ClusterPage = () => {
                 color={pct(allocCpus, totalCpus) > 80 ? '#f59e0b' : undefined}
               />}
         </Grid>
+        {hasClusterGpu && (
+          <Grid item xs={12} sm={6} md={3}>
+            {nodesLoading
+              ? <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
+              : (
+                <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}>GPU</Typography>
+                  <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 700, color: '#f59e0b' }}>
+                    {usedGpu} <Typography component="span" variant="h6" sx={{ color: 'text.secondary', fontWeight: 400 }}>/ {totalGpu}</Typography>
+                  </Typography>
+                  <LinearProgress variant="determinate" value={pct(usedGpu, totalGpu)} sx={{ mt: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#f59e0b' } }} />
+                </Paper>
+              )}
+          </Grid>
+        )}
       </Grid>
 
       {/* Вкладки */}

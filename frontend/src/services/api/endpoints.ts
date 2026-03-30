@@ -31,6 +31,8 @@ export const API_ENDPOINTS = {
     JOBS_USAGE: '/slurm/jobs/usage',
     USER_JOBS_USAGE: '/slurm/user/jobs/usage',
     USER_ASSOCIATIONS: '/slurm/user/associations',
+    USER_ACCOUNT_ASSOCIATIONS: '/slurm/user/account-associations',
+    USER_QOS: '/slurm/user/qos',
     // Узлы
     NODES: '/slurm/nodes',
     NODE: (name: string) => `/slurm/node/${name}`,
