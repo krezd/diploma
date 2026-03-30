@@ -1,0 +1,31 @@
+# =============================================================================
+# Роль slurmdbd — настраивает демон учёта SLURM
+# =============================================================================
+
+- name: Установить slurmdbd
+  apt:
+    name: slurmdbd
+    state: present
+
+- name: Создать директорию /var/run/slurm
+  file:
+    path: /var/run/slurm
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: '0755'
+
+- name: Развернуть slurmdbd.conf
+  template:
+    src: slurmdbd.conf.j2
+    dest: /etc/slurm/slurmdbd.conf
+    owner: slurm
+    group: slurm
+    mode: '0600'
+  notify: restart slurmdbd
+
+- name: Включить и запустить slurmdbd
+  systemd:
+    name: slurmdbd
+    enabled: true
+    state: started

@@ -1,0 +1,5 @@
+- name: reload slurmrestd
+  systemd:
+    name: slurmrestd
+    daemon_reload: true
+    state: restarted

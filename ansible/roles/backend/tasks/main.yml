@@ -1,0 +1,96 @@
+# =============================================================================
+# Роль backend — создаёт пользователя diploma-app, настраивает права и сервис
+# =============================================================================
+
+- name: Установить Java 21
+  apt:
+    name: openjdk-21-jdk
+    state: present
+
+- name: Создать группу diploma-app
+  group:
+    name: "{{ app_user }}"
+    system: true
+    state: present
+
+- name: Создать пользователя diploma-app
+  user:
+    name: "{{ app_user }}"
+    group: "{{ app_user }}"
+    system: true
+    shell: /bin/bash
+    home: "/home/{{ app_user }}"
+    create_home: true
+    state: present
+
+- name: Добавить diploma-app в нужные группы
+  user:
+    name: "{{ app_user }}"
+    groups: slurm,slurmrestd
+    append: true
+
+- name: Добавить slurm и slurmrestd в группу diploma-app
+  user:
+    name: "{{ item }}"
+    groups: "{{ app_user }}"
+    append: true
+  loop:
+    - slurm
+    - slurmrestd
+
+- name: Создать директорию приложения
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+- name: Выдать diploma-app доступ на чтение JWT ключа
+  acl:
+    path: /var/spool/slurm/ctld/jwt_hs256.key
+    entity: "{{ app_user }}"
+    etype: user
+    permissions: r
+    state: present
+
+- name: Создать рабочую директорию в /shared
+  file:
+    path: "{{ app_workspace }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0777'
+
+- name: Настроить sudoers для diploma-app
+  copy:
+    dest: /etc/sudoers.d/diploma-app
+    content: |
+      {{ app_user }} ALL=(ALL) NOPASSWD: /usr/sbin/useradd, /usr/sbin/userdel, /usr/sbin/usermod, /usr/bin/getent, /usr/bin/id, /usr/bin/passwd, /bin/chown, /bin/chmod, /bin/mkdir, /bin/rm, /bin/cp, /bin/mv, /usr/bin/sacctmgr, /usr/bin/sbatch
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+- name: Скопировать JAR на сервер
+  copy:
+    src: "{{ playbook_dir }}/../backend/target/{{ app_jar }}"
+    dest: "{{ app_dir }}/{{ app_jar }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0644'
+  notify: restart backend
+
+- name: Развернуть systemd-сервис для бэкенда
+  template:
+    src: diploma-app.service.j2
+    dest: /etc/systemd/system/diploma-app.service
+    mode: '0644'
+  notify:
+    - daemon reload
+    - restart backend
+
+- name: Включить и запустить diploma-app
+  systemd:
+    name: diploma-app
+    daemon_reload: true
+    enabled: true
+    state: started

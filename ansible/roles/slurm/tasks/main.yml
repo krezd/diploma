@@ -1,0 +1,54 @@
+# =============================================================================
+# Роль slurm — генерирует slurm.conf и запускает нужные демоны
+# Ansible сам собирает CPU/RAM каждого узла через ansible_facts
+# =============================================================================
+
+# --- slurm.conf ---
+- name: Развернуть slurm.conf из шаблона
+  template:
+    src: slurm.conf.j2
+    dest: /etc/slurm/slurm.conf
+    owner: slurm
+    group: slurm
+    mode: '0644'
+  notify:
+    - restart slurmctld
+    - restart slurmd
+
+# --- JWT ключ (только мастер) ---
+- name: Сгенерировать JWT ключ (только мастер)
+  shell: dd if=/dev/random of=/var/spool/slurm/ctld/jwt_hs256.key bs=32 count=1
+  args:
+    creates: /var/spool/slurm/ctld/jwt_hs256.key
+  when: inventory_hostname in groups['master']
+
+- name: Выставить права на JWT ключ
+  file:
+    path: /var/spool/slurm/ctld/jwt_hs256.key
+    owner: slurm
+    group: slurm
+    mode: '0600'
+  when: inventory_hostname in groups['master']
+
+- name: Создать cluster_state файл
+  file:
+    path: /var/spool/slurm/ctld/cluster_state
+    state: touch
+    owner: slurm
+    group: slurm
+  when: inventory_hostname in groups['master']
+
+# --- Запуск slurmctld на мастере ---
+- name: Включить и запустить slurmctld (мастер)
+  systemd:
+    name: slurmctld
+    enabled: true
+    state: started
+  when: inventory_hostname in groups['master']
+
+# --- Запуск slurmd на всех узлах ---
+- name: Включить и запустить slurmd
+  systemd:
+    name: slurmd
+    enabled: true
+    state: started

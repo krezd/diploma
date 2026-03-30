@@ -1,0 +1,101 @@
+# =============================================================================
+# Роль docker — устанавливает Docker и запускает docker-compose-v2.0.yml
+# =============================================================================
+
+- name: Установить зависимости для Docker
+  apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+
+- name: Создать директорию для ключей apt
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Загрузить GPG ключ Docker
+  get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Определить кодовое имя Ubuntu
+  command: bash -c ". /etc/os-release && echo ${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+  register: ubuntu_codename
+  changed_when: false
+
+- name: Добавить репозиторий Docker
+  copy:
+    dest: /etc/apt/sources.list.d/docker.sources
+    content: |
+      Types: deb
+      URIs: https://download.docker.com/linux/ubuntu
+      Suites: {{ ubuntu_codename.stdout }}
+      Components: stable
+      Signed-By: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+  notify: apt update
+
+- name: Обновить apt cache после добавления Docker репо
+  apt:
+    update_cache: true
+
+- name: Установить Docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+
+- name: Включить и запустить Docker
+  systemd:
+    name: docker
+    enabled: true
+    state: started
+
+- name: Добавить пользователя в группу docker
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+# --- Запуск сервисов через docker compose ---
+- name: Скопировать docker-compose-v2.0.yml на сервер
+  copy:
+    src: "{{ playbook_dir }}/../backend/docker-compose-v2.0.yml"
+    dest: /opt/diploma-app/docker-compose-v2.0.yml
+    mode: '0644'
+
+- name: Скопировать frontend для сборки образа
+  synchronize:
+    src: "{{ playbook_dir }}/../frontend/"
+    dest: /opt/diploma-app/frontend/
+    rsync_opts:
+      - "--exclude=node_modules"
+      - "--exclude=dist"
+
+- name: Запустить postgres и mysql через docker compose
+  community.docker.docker_compose_v2:
+    project_src: /opt/diploma-app
+    files:
+      - docker-compose-v2.0.yml
+    services:
+      - postgres
+      - mysql_slurm
+    state: present
+    build: never
+
+- name: Собрать и запустить frontend контейнер
+  community.docker.docker_compose_v2:
+    project_src: /opt/diploma-app
+    files:
+      - docker-compose-v2.0.yml
+    services:
+      - frontend
+    state: present
+    build: always

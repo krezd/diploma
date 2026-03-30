@@ -1,0 +1,17 @@
+AuthType=auth/munge
+AuthAltTypes=auth/jwt
+AuthAltParameters=jwt_key=/var/spool/slurm/ctld/jwt_hs256.key
+DbdHost={{ master_hostname }}
+DbdPort=6819
+SlurmUser=slurm
+DebugLevel=info
+LogFile=/var/log/slurm/slurmdbd.log
+PidFile=/var/run/slurm/slurmdbd.pid
+
+# MySQL через Docker (порт {{ mysql_port }})
+StorageType=accounting_storage/mysql
+StorageHost=127.0.0.1
+StoragePort={{ mysql_port }}
+StorageUser={{ mysql_user }}
+StoragePass={{ mysql_password }}
+StorageLoc={{ mysql_db }}

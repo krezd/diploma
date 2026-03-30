@@ -1,0 +1,93 @@
+# =============================================================================
+# Роль common — выполняется на ВСЕХ узлах кластера
+# Устанавливает: munge, MPI, базовые пакеты
+# =============================================================================
+
+- name: Обновить apt cache
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Установить базовые пакеты
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - acl
+      - munge
+      - libmunge-dev
+      - libpmix-dev
+      - openmpi-bin
+      - openmpi-common
+      - libopenmpi-dev
+      - environment-modules
+      - slurm-wlm
+    state: present
+
+# --- /etc/hosts ---
+- name: Прописать мастер-ноду в /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    regexp: '.*master$'
+    line: "{{ master_ip }} master"
+    state: present
+
+# --- Munge ---
+- name: Создать группу munge с фиксированным GID
+  group:
+    name: munge
+    gid: "{{ munge_gid }}"
+    system: true
+    state: present
+
+- name: Создать пользователя munge с фиксированным UID
+  user:
+    name: munge
+    uid: "{{ munge_uid }}"
+    gid: "{{ munge_gid }}"
+    system: true
+    shell: /bin/false
+    home: /var/lib/munge
+    create_home: false
+    state: present
+
+# --- SLURM директории ---
+- name: Создать директории SLURM
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: '0755'
+  loop:
+    - /etc/slurm
+    - /var/spool/slurm/ctld
+    - /var/spool/slurm/d
+    - /var/log/slurm
+    - /var/run/slurm
+
+- name: Создать директорию для JWT ключа
+  file:
+    path: /var/spool/slurm/ctld/jwt
+    state: directory
+    owner: slurm
+    group: slurm
+    mode: '0755'
+
+# --- NFS workspace ---
+- name: Создать точки монтирования NFS
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0777'
+  loop:
+    - "{{ nfs_workspace }}"
+    - "{{ nfs_software }}"
+
+# --- MODULEPATH ---
+- name: Добавить MODULEPATH в профиль
+  lineinfile:
+    path: /etc/profile.d/modules.sh
+    line: "export MODULEPATH={{ nfs_software }}/modules:$MODULEPATH"
+    create: true
+    state: present

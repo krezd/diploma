@@ -1,0 +1,28 @@
+# =============================================================================
+# Роль munge_master — генерирует ключ и запускает munge на мастере
+# =============================================================================
+
+- name: Сгенерировать munge.key если не существует
+  shell: dd if=/dev/urandom bs=1 count=1024 of={{ munge_key_path }}
+  args:
+    creates: "{{ munge_key_path }}"
+
+- name: Выставить права на munge.key
+  file:
+    path: "{{ munge_key_path }}"
+    owner: munge
+    group: munge
+    mode: '0400'
+
+- name: Включить и запустить munge
+  systemd:
+    name: munge
+    enabled: true
+    state: started
+
+# Сохраняем ключ локально на control node для передачи compute-узлам
+- name: Забрать munge.key на control node
+  fetch:
+    src: "{{ munge_key_path }}"
+    dest: /tmp/munge.key
+    flat: true

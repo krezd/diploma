@@ -1,0 +1,35 @@
+# =============================================================================
+# Роль nfs_master — настраивает NFS-сервер на мастере
+# =============================================================================
+
+- name: Установить NFS сервер
+  apt:
+    name:
+      - nfs-kernel-server
+      - nfs-common
+    state: present
+
+- name: Создать общие директории
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0777'
+  loop:
+    - "{{ nfs_workspace }}"
+    - "{{ nfs_software }}"
+    - "{{ nfs_software }}/modules"
+
+- name: Настроить /etc/exports
+  blockinfile:
+    path: /etc/exports
+    create: true
+    block: |
+      {{ nfs_workspace }} *(rw,sync,no_subtree_check,no_root_squash)
+      {{ nfs_software }} *(rw,sync,no_subtree_check,no_root_squash)
+  notify: exportfs reload
+
+- name: Включить и запустить NFS
+  systemd:
+    name: nfs-server
+    enabled: true
+    state: started

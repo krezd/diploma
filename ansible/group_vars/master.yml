@@ -1,0 +1,38 @@
+# =============================================================================
+# Переменные только для мастер-ноды
+# =============================================================================
+
+# --- Приложение ---
+app_user: diploma-app
+app_dir: /opt/diploma-app
+app_jar: diploma.jar
+app_workspace: /shared/workspace/diploma-app
+
+# --- PostgreSQL (в Docker) ---
+pg_db: diploma
+pg_user: postgres
+pg_password: admin
+
+# --- MySQL / slurmdbd (в Docker) ---
+mysql_db: slurm_acct_db
+mysql_user: slurm
+mysql_password: slurm_secret
+mysql_root_password: root_secret
+mysql_port: 3307
+
+# --- JWT ---
+jwt_secret: secret
+jwt_access_ttl: 6000
+jwt_refresh_ttl: 12000
+slurm_token_lifetime: 1800
+
+# --- SLURM группы ---
+slurm_group_user: slurm-user
+slurm_group_admin: slurm
+
+# --- slurmrestd ---
+slurmrestd_port: 6820
+slurm_rest_api_version: v0.0.40
+
+# --- Docker compose ---
+docker_compose_file: "{{ playbook_dir }}/../backend/docker-compose-v2.0.yml"

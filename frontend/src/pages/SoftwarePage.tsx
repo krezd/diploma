@@ -252,10 +252,10 @@ const EditDialog = ({ pkg, onClose, onSubmit, loading }: {
       <DialogTitle sx={{ borderBottom: '1px solid #2d3748' }}>
         Редактировать — {pkg.name}/{pkg.version}
       </DialogTitle>
-      <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2}}>
         <TextField label="Категория" size="small" select fullWidth
           defaultValue={pkg.category ?? ''}
-          onChange={(e) => setCategory(e.target.value)}>
+          onChange={(e) => setCategory(e.target.value)} sx={{ mt: 1 }} >
           <MenuItem value=""><em>Не указана</em></MenuItem>
           {CATEGORIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
         </TextField>

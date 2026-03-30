@@ -1,0 +1,56 @@
+# slurm.conf — сгенерировано Ansible, не редактировать вручную
+
+# Basic configuration
+ClusterName={{ slurm_cluster_name }}
+ControlMachine={{ master_hostname }}
+ControlAddr={{ master_ip }}
+SlurmUser=slurm
+SlurmctldPort=6817
+SlurmdPort=6818
+AuthType=auth/munge
+AuthAltTypes=auth/jwt
+AuthAltParameters=jwt_key=/var/spool/slurm/ctld/jwt_hs256.key
+StateSaveLocation=/var/spool/slurm/ctld
+SlurmdSpoolDir=/var/spool/slurm/d
+SwitchType=switch/none
+MpiDefault=pmix_v5
+SlurmctldPidFile=/var/run/slurmctld.pid
+SlurmdPidFile=/var/run/slurmd.pid
+ProctrackType=proctrack/linuxproc
+ReturnToService=2
+SlurmctldTimeout=300
+SlurmdTimeout=300
+PropagateResourceLimitsExcept=MEMLOCK
+LaunchParameters=enable_nss_slurm
+SlurmctldParameters=enable_nss_slurm
+SlurmdParameters=enable_nss_slurm
+
+# Scheduling
+SchedulerType=sched/backfill
+SelectType=select/cons_tres
+SelectTypeParameters=CR_Core
+TaskPlugin=task/none
+
+# Accounting
+AccountingStorageType=accounting_storage/slurmdbd
+AccountingStorageHost={{ master_hostname }}
+AccountingStoragePort=6819
+AccountingStoreFlags=job_comment
+AccountingStorageTRES=gres/gpu
+JobAcctGatherType=jobacct_gather/linux
+JobAcctGatherFrequency=30
+
+# Logging
+SlurmctldDebug=info
+SlurmctldLogFile=/var/log/slurm/slurmctld.log
+SlurmdDebug=info
+SlurmdLogFile=/var/log/slurm/slurmd.log
+JobCompType=jobcomp/none
+
+# Узлы — CPU и RAM берутся автоматически с каждого хоста через ansible_facts
+{% for host in groups['cluster'] %}
+NodeName={{ host }} Addr={{ hostvars[host]['ansible_host'] }} CPUs={{ hostvars[host]['ansible_processor_vcpus'] }} RealMemory={{ hostvars[host]['ansible_memtotal_mb'] }} State=UNKNOWN
+{% endfor %}
+
+# Партиция включает все узлы кластера
+PartitionName={{ slurm_partition_name }} Nodes={{ groups['cluster'] | join(',') }} Default=YES MaxTime={{ slurm_partition_max_time }} State=UP

@@ -1,0 +1,64 @@
+# =============================================================================
+# Плейбук настройки мастер-ноды
+# Запуск: ansible-playbook -i inventory.ini playbook-master.yml
+# =============================================================================
+---
+# --- Шаг 1: собрать facts со ВСЕХ узлов (нужно для slurm.conf) ---
+- name: Собрать факты со всех узлов кластера
+  hosts: cluster
+  gather_facts: true
+  tasks: []
+
+# --- Шаг 2: общие пакеты на всех узлах ---
+- name: Базовая настройка всех узлов
+  hosts: cluster
+  roles:
+    - common
+
+# --- Шаг 3: munge на мастере (генерация ключа) ---
+- name: Настройка munge на мастере
+  hosts: master
+  roles:
+    - munge_master
+
+# --- Шаг 4: munge на compute (копирование ключа) ---
+- name: Настройка munge на compute-узлах
+  hosts: compute
+  roles:
+    - munge_compute
+
+# --- Шаг 5: NFS сервер на мастере ---
+- name: Настройка NFS сервера
+  hosts: master
+  roles:
+    - nfs_master
+
+# --- Шаг 6: NFS клиент на compute-узлах ---
+- name: Монтирование NFS на compute-узлах
+  hosts: compute
+  roles:
+    - nfs_compute
+
+# --- Шаг 7: SLURM на всех узлах (конфиг генерируется с реальными CPU/RAM) ---
+- name: Настройка SLURM
+  hosts: cluster
+  roles:
+    - slurm
+
+# --- Шаг 8: slurmrestd только на мастере ---
+- name: Настройка slurmrestd
+  hosts: master
+  roles:
+    - slurmrestd
+
+# --- Шаг 9: Docker + БД + фронтенд ---
+- name: Установка Docker и запуск контейнеров
+  hosts: master
+  roles:
+    - docker
+
+# --- Шаг 10: slurmdbd ---
+- name: Настройка slurmdbd
+  hosts: master
+  roles:
+    - slurmdbd

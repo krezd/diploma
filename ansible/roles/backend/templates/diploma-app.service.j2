@@ -1,0 +1,37 @@
+[Unit]
+Description=Diploma Spring Boot Application
+After=network.target slurmrestd.service
+Wants=slurmrestd.service
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_user }}
+UMask=000
+WorkingDirectory={{ app_dir }}
+Environment="JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64"
+
+Environment="SPRING_DATASOURCE_URL=jdbc:postgresql://{{ master_ip }}:5432/{{ pg_db }}"
+Environment="SPRING_DATASOURCE_USERNAME={{ pg_user }}"
+Environment="SPRING_DATASOURCE_PASSWORD={{ pg_password }}"
+Environment="JWT_SECRET={{ jwt_secret }}"
+Environment="JWT_ACCESSTTL={{ jwt_access_ttl }}"
+Environment="JWT_REFRESHTTL={{ jwt_refresh_ttl }}"
+Environment="ROOT_PATH={{ app_workspace }}/"
+Environment="SLURM_GROUP_USER={{ slurm_group_user }}"
+Environment="SLURM_GROUP_ADMIN={{ slurm_group_admin }}"
+Environment="SLURM_TOKEN_LIFETIME={{ slurm_token_lifetime }}"
+
+ExecStart=/usr/bin/java -jar {{ app_dir }}/{{ app_jar }}
+
+ReadOnlyPaths=/var/spool/slurm/ctld/jwt_hs256.key
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=diploma-app
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65536
+LimitNPROC=65536
+
+[Install]
+WantedBy=multi-user.target

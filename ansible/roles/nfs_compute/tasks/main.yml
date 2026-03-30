@@ -1,0 +1,24 @@
+# =============================================================================
+# Роль nfs_compute — монтирует NFS на compute-узле
+# =============================================================================
+
+- name: Установить NFS клиент
+  apt:
+    name: nfs-common
+    state: present
+
+- name: Примонтировать NFS workspace
+  mount:
+    path: "{{ nfs_workspace }}"
+    src: "{{ master_ip }}:{{ nfs_workspace }}"
+    fstype: nfs
+    opts: rw,hard,intr,noatime,vers=3
+    state: mounted
+
+- name: Примонтировать NFS software
+  mount:
+    path: "{{ nfs_software }}"
+    src: "{{ master_ip }}:{{ nfs_software }}"
+    fstype: nfs
+    opts: rw,hard,intr,noatime,vers=3
+    state: mounted

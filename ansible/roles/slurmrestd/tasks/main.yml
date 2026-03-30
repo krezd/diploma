@@ -1,0 +1,51 @@
+# =============================================================================
+# Роль slurmrestd — устанавливает и настраивает REST API для SLURM
+# =============================================================================
+
+- name: Установить slurmrestd
+  apt:
+    name: slurmrestd
+    state: present
+
+- name: Создать группу slurmrestd
+  group:
+    name: slurmrestd
+    system: true
+    state: present
+
+- name: Создать пользователя slurmrestd
+  user:
+    name: slurmrestd
+    group: slurmrestd
+    system: true
+    shell: /bin/false
+    create_home: false
+    state: present
+
+- name: Создать директорию override для systemd
+  file:
+    path: /etc/systemd/system/slurmrestd.service.d
+    state: directory
+    mode: '0755'
+
+- name: Развернуть override.conf для slurmrestd
+  copy:
+    dest: /etc/systemd/system/slurmrestd.service.d/override.conf
+    content: |
+      [Service]
+      User=slurmrestd
+      Group=slurmrestd
+
+      ExecStart=
+      Environment=SLURM_JWT=daemon
+
+      ExecStart=/usr/sbin/slurmrestd -a rest_auth/jwt -s slurmctld,slurmdbd 0.0.0.0:{{ slurmrestd_port }}
+    mode: '0644'
+  notify: reload slurmrestd
+
+- name: Включить и запустить slurmrestd
+  systemd:
+    name: slurmrestd
+    daemon_reload: true
+    enabled: true
+    state: started

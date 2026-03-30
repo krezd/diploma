@@ -1,0 +1,21 @@
+# =============================================================================
+# Переменные для ВСЕХ узлов
+# =============================================================================
+
+# --- Сеть ---
+master_hostname: master
+master_ip: "{{ hostvars['master']['ansible_host'] }}"  # берётся из inventory
+
+# --- SLURM ---
+slurm_cluster_name: diplomacluster
+slurm_partition_name: debug
+slurm_partition_max_time: INFINITE
+
+# --- NFS ---
+nfs_workspace: /shared/workspace
+nfs_software: /shared/software
+
+# --- Munge ---
+munge_key_path: /etc/munge/munge.key
+munge_uid: 110
+munge_gid: 110
