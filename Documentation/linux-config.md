@@ -119,6 +119,12 @@
     sudo chown -R slurm:slurm /var/log/slurm
     sudo chown -R slurm:slurm /var/run/slurm
     sudo chmod 755 /var/spool/slurm/ctld/jwt
+    sudo nano /etc/slurm/cgroup.conf
+
+    #
+    ConstrainRAMSpace=yes
+    AllowedRAMSpace=120
+        
     sudo nano /etc/slurm/slurm.conf
 
     # Basic configuration
@@ -149,18 +155,18 @@
     # Scheduling
     SchedulerType=sched/backfill
     SelectType=select/cons_tres
-    SelectTypeParameters=CR_Core
-    TaskPlugin=task/none
-
-    # Accounting
+    SelectTypeParameters=CR_Core_Memory
+    TaskPlugin=task/cgroup
+    
+    #Accounting
     AccountingStorageType=accounting_storage/slurmdbd
     AccountingStorageHost=master
     AccountingStoragePort=6819
     AccountingStoreFlags=job_comment
     AccountingStorageTRES=gres/gpu
-    JobAcctGatherType=jobacct_gather/linux
+    JobAcctGatherType=jobacct_gather/cgroup
     JobAcctGatherFrequency=30
-
+    
     # Logging
     SlurmctldDebug=info
     SlurmctldLogFile=/var/log/slurm/slurmctld.log
