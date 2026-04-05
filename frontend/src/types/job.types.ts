@@ -521,6 +521,7 @@ export interface BatchJobSubmitRequest {
 
   // Ресурсы
   nodes?: number;
+  nodelist?: string;
   ntasks?: number;
   ntasks_per_node?: number;
   cpus_per_task?: number;

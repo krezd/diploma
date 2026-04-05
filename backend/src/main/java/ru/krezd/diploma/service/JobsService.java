@@ -151,11 +151,11 @@ public class JobsService {
         String scriptContent;
         if (request.isRawMode()) {
             // В rawMode скрипт уже содержит #SBATCH директивы — используем как есть
-            scriptContent = request.getScriptBody() != null ? request.getScriptBody() : "#!/bin/bash\n";
+            scriptContent = request.getScriptBody() != null ? request.getScriptBody() : "#!/bin/bash -l\n";
         } else {
             String jobName = (request.getName() != null && !request.getName().isBlank())
                     ? request.getName() : jobFolder;
-            StringBuilder script = new StringBuilder("#!/bin/bash\n");
+            StringBuilder script = new StringBuilder("#!/bin/bash -l\n");
             script.append("#SBATCH --job-name=").append(jobName).append("\n");
             if (request.getPartition() != null)
                 script.append("#SBATCH --partition=").append(request.getPartition()).append("\n");
@@ -165,8 +165,12 @@ public class JobsService {
                 script.append("#SBATCH --qos=").append(request.getQos()).append("\n");
             if (request.getComment() != null)
                 script.append("#SBATCH --comment=\"").append(request.getComment()).append("\"\n");
-            if (request.getNodes() != null)
+            if (request.getNodelist() != null && !request.getNodelist().isBlank()) {
+                script.append("#SBATCH --nodelist=").append(request.getNodelist()).append("\n");
+            }
+            else if (request.getNodes() != null) {
                 script.append("#SBATCH --nodes=").append(request.getNodes()).append("\n");
+            }
             if (request.getNtasks() != null)
                 script.append("#SBATCH --ntasks=").append(request.getNtasks()).append("\n");
             if (request.getNtasksPerNode() != null)

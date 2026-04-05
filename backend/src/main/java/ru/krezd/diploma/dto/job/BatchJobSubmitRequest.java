@@ -40,6 +40,9 @@ public class BatchJobSubmitRequest {
     /** --nodes: количество узлов. */
     private Integer nodes;
 
+    /** --nodelist: название узлов. */
+    private String nodelist;
+
     /** --ntasks: общее количество задач (MPI процессов). */
     private Integer ntasks;
 

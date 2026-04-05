@@ -34,7 +34,7 @@ import {
   Chip,
   Tab,
   Tabs,
-  InputAdornment,
+  InputAdornment, Checkbox, FormHelperText,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -70,7 +70,7 @@ const FieldHelp = ({ text }: { text: string }) => (
 // ─── Генератор preview скрипта ────────────────────────────────────────────────
 
 function buildPreviewScript(params: BatchJobSubmitRequest): string {
-  const lines: string[] = ['#!/bin/bash'];
+  const lines: string[] = ['#!/bin/bash -l'];
 
   const add = (flag: string, value: string | number | boolean | undefined | null) => {
     if (value !== undefined && value !== null && value !== '' && value !== false) {
@@ -86,7 +86,11 @@ function buildPreviewScript(params: BatchJobSubmitRequest): string {
   add('--account', params.account);
   add('--qos', params.qos);
   if (params.comment) lines.push(`#SBATCH --comment="${params.comment}"`);
-  add('--nodes', params.nodes);
+  if (params.nodelist && params.nodelist.trim()) {
+    add('--nodelist', params.nodelist);
+  } else if (params.nodes) {
+    add('--nodes', params.nodes);
+  }
   add('--ntasks', params.ntasks);
   add('--ntasks-per-node', params.ntasks_per_node);
   add('--cpus-per-task', params.cpus_per_task);
@@ -386,7 +390,7 @@ const ConfirmDialog = ({ open, onClose, onConfirm, params, mode, loading }: Conf
 // ─── Главная страница ─────────────────────────────────────────────────────────
 
 
-const DEFAULT_PARAMS: BatchJobSubmitRequest = { script_body: '#!/bin/bash\n\n# Ваши команды здесь\n' };
+const DEFAULT_PARAMS: BatchJobSubmitRequest = { script_body: '#!/bin/bash -l\n\n# Ваши команды здесь\n' };
 
 export const JobNewPage = () => {
   const navigate = useNavigate();
@@ -449,6 +453,16 @@ export const JobNewPage = () => {
   });
   const partitions = (partitionsData?.partitions ?? []).map((p) => p.name).filter((n): n is string => !!n);
 
+  // Узлы
+  const { data: nodesData } = useQuery({
+    queryKey: ['nodes'],
+    queryFn: () => apiClient.get<{ nodes: { name?: string; state?: string[] }[] }>(API_ENDPOINTS.SLURM.NODES).then((r) => r.data),
+  });
+  const nodelist = (nodesData?.nodes ?? []).filter((node) => {
+    const states = node.state ?? [];
+    return !states.some(state=> ['DOWN', 'DRAIN', 'DRAINED', 'UNKNOWN'].includes(state));
+  }).map((p) => p.name).filter((n): n is string => !!n).sort();
+
   const set = <K extends keyof BatchJobSubmitRequest>(key: K, value: BatchJobSubmitRequest[K]) =>
     setParams((prev) => ({ ...prev, [key]: value }));
 
@@ -481,7 +495,7 @@ export const JobNewPage = () => {
     try {
       await filesApi.uploadFiles([file], username, false);
       setUploadedExecFile(file.name);
-      set('script_body', `#!/bin/bash\n\n./${file.name}`);
+      set('script_body', `#!/bin/bash -l\n\n./${file.name}`);
     } catch {
       setUploadExecError('Ошибка загрузки файла');
     } finally {
@@ -625,8 +639,55 @@ export const JobNewPage = () => {
                             label={<>Узлов <FieldHelp text="--nodes: количество вычислительных узлов (серверов). Каждый узел — отдельная машина." /></>}
                             placeholder="1"
                             value={params.nodes ?? ''}
-                            onChange={(e) => setNum('nodes', e.target.value)}
+                            disabled={!!params.nodelist && params.nodelist.length > 0}
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? undefined : Number(e.target.value);
+                              set('nodes', val);
+                              if (val) set('nodelist', undefined);
+                            }}
                             InputProps={{ inputProps: { min: 1 } }} />
+                        </Grid>
+                        <Grid item xs={12} sm={8}>
+                          <FormControl fullWidth size="small" disabled={!!params.nodes && params.nodes > 0}>
+                            <InputLabel id="nodelist-select-label">
+                              Список узлов <FieldHelp text="--nodelist: конкретные узлы для выполнения. Можно выбрать несколько. Если выбраны узлы, поле 'Количество узлов' становится недоступным." />
+                            </InputLabel>
+                            <Select
+                                labelId="nodelist-select-label"
+                                multiple
+                                value={params.nodelist ? params.nodelist.split(',') : []}
+                                label="Список узлов"
+                                onChange={(e) => {
+                                  const selected = e.target.value as string[];
+                                  set('nodelist', selected.length ? selected.join(',') : undefined);
+                                  if (selected.length) set('nodes', undefined);
+                                }}
+                                renderValue={(selected) => {
+                                  if (selected.length === 0) return <em>Выберите узлы</em>;
+                                  return selected.join(', ');
+                                }}
+                                MenuProps={{
+                                  PaperProps: {
+                                    style: { maxHeight: 300 },
+                                  },
+                                }}
+                            >
+                              {nodelist.map((node) => {
+                                const selected = (params.nodelist?.split(',') || []).includes(node);
+                                return (
+                                    <MenuItem key={node} value={node}>
+                                      <Checkbox checked={selected} />
+                                      <ListItemText primary={node} />
+                                    </MenuItem>
+                                );
+                              })}
+                            </Select>
+                            <FormHelperText>
+                              {params.nodes
+                                  ? "Поле недоступно, так как указано количество узлов"
+                                  : "Выберите один или несколько узлов для выполнения задания"}
+                            </FormHelperText>
+                          </FormControl>
                         </Grid>
                         <Grid item xs={12} sm={4}>
                           <TextField fullWidth size="small" type="number"
