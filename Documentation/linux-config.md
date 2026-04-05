@@ -1,4 +1,4 @@
-# Настройка Linux кластера
+ x# Настройка Linux кластера
 
 ### Добавления адресов для общения между узлами
 
@@ -34,7 +34,7 @@
     sudo apt update
     sudo apt install -y munge libmunge-dev
     dpkg -l | grep -E '(munge)'
-    sudo groupadd -r -g 110 munge      # где 998 — это GID с мастер-ноды
+    sudo groupadd -r -g 110 munge      # где 110 — это GID с мастер-ноды
     sudo useradd -r -g munge -s /bin/false -d /var/lib/munge -u 110 munge
     sudo mv /tmp/munge.key /etc/munge/
     sudo chown munge:munge /etc/munge/munge.key
@@ -407,6 +407,8 @@
     Environment="SLURM_GROUP_USER=slurm-user"
     Environment="SLURM_GROUP_ADMIN=slurm"
     Environment="SLURM_TOKEN_LIFETIME=1800"
+    Environment="SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE=1GB"
+    Environment="SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE=1GB"
     
     ExecStart=/usr/bin/java -jar /opt/diploma-app/diploma.jar
     
@@ -490,3 +492,6 @@ nginx раздаёт статику и проксирует `/api/*` на бэк
     curl http://localhost/api/slurm/nodes
 
 Приложение доступно на http://192.168.0.18 (порт 80).
+
+
+Для приложения на сервере нужно создать вычислительную сеть на InfiniBand через которую будут общаться узлы для вычислений, также добавить эту сеть в mpi конфиг

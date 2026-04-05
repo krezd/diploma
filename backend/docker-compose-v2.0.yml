@@ -36,10 +36,10 @@ services:
       - slurm_network
     restart: unless-stopped
     command:
-      - "character-set-server=utf8mb4"
-      - "collation-server=utf8mb4_unicode_ci"
-      - "innodb-buffer-pool-size=256M"
-      - "innodb-lock-wait-timeout=900"
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+      - --innodb-lock-wait-timeout=900
 
   frontend:
     build: ../frontend
