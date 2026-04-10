@@ -83,7 +83,8 @@
     mount | grep nfs
     ls -la /shared/workspace/
     sudo nano /etc/fstab
-    192.168.0.18:/shared/workspace /shared/workspace nfs rw,hard,intr,noatime,vers=3 0 0
+    192.168.0.18:/shared/workspace /shared/workspace nfs rw,hard,intr,noatime,vers=3,noauto,x-systemd.automount,x-systemd.device-timeout=30 0 0
+    192.168.0.18:/shared/software /shared/software nfs rw,hard,intr,noatime,vers=3,noauto,x-systemd.automount,x-systemd.device-timeout=30 0 0
     sudo mount -a
     sudo apt install -y environment-modules 
     echo "export MODULEPATH=/shared/software/modules:\$MODULEPATH" | sudo tee -a /etc/profile.d/modules.sh
