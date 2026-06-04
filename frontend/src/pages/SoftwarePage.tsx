@@ -35,12 +35,13 @@ const STATUS_COLORS: Record<PackageStatus, 'success' | 'warning' | 'error' | 'in
 
 const TABLE_HEAD_SX = {
   '& th': {
-    bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12,
+    bgcolor: (t: { palette: { mode: string } }) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9',
+    color: 'text.secondary', fontSize: 12,
     fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.6,
   },
 };
 const TABLE_ROW_SX = {
-  '& td': { borderColor: '#2d3748', py: 1 },
+  '& td': { borderColor: 'divider', py: 1 },
 };
 
 const CATEGORIES = ['interpreter', 'compiler', 'library', 'tool', 'mpi', 'math', 'other'];
@@ -54,10 +55,10 @@ const ScanResultDialog = ({ result, onClose }: {
   if (!result) return null;
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Результат сканирования
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>Новых пакетов</Typography>
@@ -73,7 +74,7 @@ const ScanResultDialog = ({ result, onClose }: {
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button variant="contained" onClick={onClose}>Готово</Button>
       </DialogActions>
     </Dialog>
@@ -98,8 +99,8 @@ const RegisterDialog = ({ open, onClose, onSubmit, loading }: {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
-      <DialogTitle sx={{ borderBottom: '1px solid #2d3748' }}>Зарегистрировать ПО</DialogTitle>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
+      <DialogTitle sx={{ borderBottom: '1px solid', borderBottomColor: 'divider' }}>Зарегистрировать ПО</DialogTitle>
       <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
           <TextField label="Имя *" size="small" fullWidth value={form.name}
@@ -114,7 +115,7 @@ const RegisterDialog = ({ open, onClose, onSubmit, loading }: {
         </TextField>
         <TextField label="Описание" size="small" fullWidth value={form.description}
           onChange={handleChange('description')} multiline rows={2} />
-        <Divider sx={{ borderColor: '#2d3748' }} />
+        <Divider />
         <Typography variant="caption" sx={{ color: 'text.secondary' }}>
           Modulefile (необязательно — если уже существует в /shared/software/modules/, оставьте пустым)
         </Typography>
@@ -123,7 +124,7 @@ const RegisterDialog = ({ open, onClose, onSubmit, loading }: {
           inputProps={{ sx: { fontFamily: 'monospace', fontSize: 12 } }}
           placeholder={'#%Module1.0\nset root /shared/software/python/3.9.18\nprepend-path PATH $root/bin'} />
       </DialogContent>
-      <DialogActions sx={{ borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button variant="contained" disabled={!valid || loading}
           onClick={() => onSubmit(form)}>
@@ -169,8 +170,8 @@ const UploadDialog = ({ open, onClose, onSubmit, loading }: {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
-      <DialogTitle sx={{ borderBottom: '1px solid #2d3748' }}>Загрузить ПО</DialogTitle>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
+      <DialogTitle sx={{ borderBottom: '1px solid', borderBottomColor: 'divider' }}>Загрузить ПО</DialogTitle>
       <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
           <TextField label="Имя *" size="small" fullWidth value={name}
@@ -192,7 +193,7 @@ const UploadDialog = ({ open, onClose, onSubmit, loading }: {
             onChange={(e) => setLibPath(e.target.value)} placeholder="lib" />
         </Box>
         <Button component="label" variant="outlined" startIcon={<UploadFileIcon />}
-          sx={{ borderColor: '#2d3748', color: 'text.secondary', justifyContent: 'flex-start' }}>
+          sx={{ borderColor: 'divider', color: 'text.secondary', justifyContent: 'flex-start' }}>
           {file ? file.name : 'Выбрать архив * (.zip, .tar.gz, .tar.bz2, .tar.xz)'}
           <input type="file" hidden accept=".zip,.tar.gz,.tgz,.tar.bz2,.tar.xz"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
@@ -202,7 +203,7 @@ const UploadDialog = ({ open, onClose, onSubmit, loading }: {
             Будет распакован в /shared/software/{name}/{version}/
           </Typography>
         )}
-        <Divider sx={{ borderColor: '#2d3748' }} />
+        <Divider />
         <TextField
           label="Пост-установочный скрипт (bash, необязательно)"
           size="small" fullWidth multiline rows={5}
@@ -216,7 +217,7 @@ const UploadDialog = ({ open, onClose, onSubmit, loading }: {
           inputProps={{ sx: { fontFamily: 'monospace', fontSize: 12 } }}
           placeholder={'#%Module1.0\nset root /shared/software/python/3.9.18\nprepend-path PATH $root/bin'} />
       </DialogContent>
-      <DialogActions sx={{ borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button variant="contained" disabled={!valid || loading} onClick={handleSubmit}>
           {loading ? <CircularProgress size={18} /> : 'Загрузить и установить'}
@@ -248,8 +249,8 @@ const EditDialog = ({ pkg, onClose, onSubmit, loading }: {
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
-      <DialogTitle sx={{ borderBottom: '1px solid #2d3748' }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
+      <DialogTitle sx={{ borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Редактировать — {pkg.name}/{pkg.version}
       </DialogTitle>
       <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2}}>
@@ -266,7 +267,7 @@ const EditDialog = ({ pkg, onClose, onSubmit, loading }: {
           defaultValue={pkg.installedBy ?? ''}
           onChange={(e) => setInstalledBy(e.target.value)} />
       </DialogContent>
-      <DialogActions sx={{ borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button variant="contained" disabled={loading}
           onClick={() => onSubmit(pkg.id, {
@@ -294,7 +295,7 @@ const ModulefileDialog = ({ pkg, onClose }: { pkg: SoftwarePackage | null; onClo
 
   return (
     <Dialog open onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
       <DialogTitle sx={{ borderBottom: '1px solid #2d3748', display: 'flex', justifyContent: 'space-between' }}>
         <Typography variant="h6">Modulefile — {pkg.name}/{pkg.version}</Typography>
       </DialogTitle>
@@ -303,15 +304,15 @@ const ModulefileDialog = ({ pkg, onClose }: { pkg: SoftwarePackage | null; onClo
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
         ) : (
           <Box component="pre" sx={{
-            m: 0, p: 2, bgcolor: '#0d1117', borderRadius: 1, overflow: 'auto',
-            fontFamily: 'monospace', fontSize: 13, color: '#e2e8f0',
-            border: '1px solid #2d3748', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+            m: 0, p: 2, bgcolor: (t) => t.palette.mode === 'dark' ? '#0d1117' : '#f8fafc', borderRadius: 1, overflow: 'auto',
+            fontFamily: 'monospace', fontSize: 13, color: 'text.primary',
+            border: '1px solid', borderColor: 'divider', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
           }}>
             {data?.content || '— файл не найден —'}
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} variant="contained">Закрыть</Button>
       </DialogActions>
     </Dialog>
@@ -328,10 +329,10 @@ const DeleteDialog = ({ pkg, onClose, onConfirm, loading }: {
   if (!pkg) return null;
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Удалить {pkg.name}/{pkg.version}?
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2 }}>
         <Alert severity="warning" sx={{ mb: 2 }}>
           Пакет будет удалён из базы данных.
         </Alert>
@@ -347,7 +348,7 @@ const DeleteDialog = ({ pkg, onClose, onConfirm, loading }: {
           </Typography>
         )}
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button variant="contained" color="error" disabled={loading}
           onClick={() => onConfirm(pkg.id, deleteFiles)}>
@@ -464,14 +465,14 @@ export const SoftwarePage = () => {
               <Button variant="outlined" startIcon={<SyncIcon />}
                 onClick={() => scanMutation.mutate()}
                 disabled={scanMutation.isPending}
-                sx={{ borderColor: '#2d3748', color: 'text.secondary' }}>
+                sx={{ borderColor: 'divider', color: 'text.secondary' }}>
                 {scanMutation.isPending ? <CircularProgress size={16} sx={{ mr: 1 }} /> : null}
                 Сканировать
               </Button>
             </Tooltip>
             <Button variant="outlined" startIcon={<AddIcon />}
               onClick={() => setRegisterOpen(true)}
-              sx={{ borderColor: '#2d3748', color: 'text.secondary' }}>
+              sx={{ borderColor: 'divider', color: 'text.secondary' }}>
               Зарегистрировать
             </Button>
             <Button variant="contained" startIcon={<UploadFileIcon />}
@@ -505,7 +506,7 @@ export const SoftwarePage = () => {
       </Box>
 
       {/* Таблица */}
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
             <TableRow sx={TABLE_HEAD_SX}>
@@ -534,7 +535,7 @@ export const SoftwarePage = () => {
                 <TableCell>
                   {pkg.category && (
                     <Chip label={pkg.category} size="small" variant="outlined"
-                      sx={{ fontSize: 11, height: 20, color: 'text.secondary', borderColor: '#2d3748' }} />
+                      sx={{ fontSize: 11, height: 20, color: 'text.secondary', borderColor: 'divider' }} />
                   )}
                 </TableCell>
                 <TableCell>
@@ -616,7 +617,7 @@ export const SoftwarePage = () => {
 
       {/* Подсказка для пользователей */}
       {!isAdmin && packages.length > 0 && (
-        <Alert severity="info" sx={{ mt: 2, bgcolor: '#1a2035', border: '1px solid #2d3748' }}>
+        <Alert severity="info" sx={{ mt: 2 }}>
           Для использования ПО в задании добавьте в скрипт: <code>module load &lt;имя&gt;/&lt;версия&gt;</code>
         </Alert>
       )}

@@ -152,7 +152,7 @@ const FileBrowser = ({ open, onClose, onSelect, username, isAdmin, selectMode = 
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <FolderOpenIcon fontSize="small" />
@@ -160,7 +160,7 @@ const FileBrowser = ({ open, onClose, onSelect, username, isAdmin, selectMode = 
         </Box>
       </DialogTitle>
       <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ px: 2, py: 1, borderBottom: '1px solid #2d3748', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ px: 2, py: 1, borderBottom: '1px solid', borderBottomColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="caption" sx={{ color: 'text.secondary', fontFamily: 'monospace' }}>
             /{currentPath}
           </Typography>
@@ -186,7 +186,7 @@ const FileBrowser = ({ open, onClose, onSelect, username, isAdmin, selectMode = 
                   primary={f.fileName}
                   secondary={f.fileType === 'DIRECTORY' ? 'Папка' : `${f.fileSize ?? 0} байт`}
                   primaryTypographyProps={{
-                    sx: { fontFamily: 'monospace', color: f.fileType === 'DIRECTORY' ? '#64b5f6' : 'text.primary' },
+                    sx: { fontFamily: 'monospace', color: f.fileType === 'DIRECTORY' ? 'primary.light' : 'text.primary' },
                   }}
                 />
               </ListItemButton>
@@ -265,7 +265,7 @@ const TemplatePanel = ({ onApply, currentParams, mode, username }: TemplatePanel
       </Box>
 
       {showSaveForm && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1.5, bgcolor: '#151b2d', borderRadius: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 1.5, bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', borderRadius: 1 }}>
           <TextField size="small" label="Название шаблона" value={saveName} onChange={(e) => setSaveName(e.target.value)} />
           <TextField size="small" label="Описание" value={saveDesc} onChange={(e) => setSaveDesc(e.target.value)} />
           <FormControlLabel
@@ -306,7 +306,7 @@ const TemplatePanel = ({ onApply, currentParams, mode, username }: TemplatePanel
           )}
           {publicTemplates.length > 0 && (
             <>
-              {myTemplates.length > 0 && <Divider sx={{ borderColor: '#2d3748' }} />}
+              {myTemplates.length > 0 && <Divider />}
               <Typography variant="caption" sx={{ color: 'text.secondary', px: 0.5 }}>Публичные</Typography>
               <List dense disablePadding>
                 {publicTemplates.map((t) => (
@@ -347,7 +347,7 @@ const ConfirmDialog = ({ open, onClose, onConfirm, params, mode, loading }: Conf
   const script = mode === 'SCRIPT' ? (params.script_body ?? '') : buildPreviewScript(params);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
       <DialogTitle>Подтверждение отправки задания</DialogTitle>
       <DialogContent>
         <Alert severity="info" sx={{ mb: 2 }}>Проверьте параметры перед отправкой в SLURM.</Alert>
@@ -363,14 +363,14 @@ const ConfirmDialog = ({ open, onClose, onConfirm, params, mode, loading }: Conf
               ['Лимит времени', params.time_limit_minutes ? `${params.time_limit_minutes} мин` : '—'],
               ['Память/узел', params.mem_mb_per_node ? `${params.mem_mb_per_node} MB` : '—'],
             ].map(([label, value]) => (
-              <Box key={label} sx={{ display: 'flex', py: 0.5, borderBottom: '1px solid #2d374840' }}>
+              <Box key={label} sx={{ display: 'flex', py: 0.5, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 160, flexShrink: 0 }}>{label}</Typography>
                 <Typography variant="body2">{value}</Typography>
               </Box>
             ))}
           </Box>
         )}
-        <Box sx={{ bgcolor: '#151b2d', borderRadius: 1, p: 1.5 }}>
+        <Box sx={{ bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', borderRadius: 1, p: 1.5 }}>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>Итоговый скрипт:</Typography>
           <Typography variant="body2" sx={{ fontFamily: 'monospace', whiteSpace: 'pre-wrap', mt: 0.5, fontSize: 12 }}>
             {script.slice(0, 600)}{script.length > 600 ? '\n...' : ''}
@@ -560,7 +560,7 @@ export const JobNewPage = () => {
           {mode === 'CONSTRUCTOR' ? (
             <>
               {/* Вкладки: форма / preview */}
-              <Box sx={{ borderBottom: 1, borderColor: '#2d3748', mb: 2 }}>
+              <Box sx={{ borderBottom: '1px solid', borderBottomColor: 'divider', mb: 2 }}>
                 <Tabs value={previewTab} onChange={(_, v) => setPreviewTab(v)}
                   sx={{ '& .MuiTab-root': { minHeight: 40 } }}>
                   <Tab label="Параметры" />
@@ -573,7 +573,7 @@ export const JobNewPage = () => {
 
                   {/* Основные параметры */}
                   <Accordion defaultExpanded
-                    sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', '&:before': { display: 'none' } }}>
+                    sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Основные параметры</Typography>
                     </AccordionSummary>
@@ -628,7 +628,7 @@ export const JobNewPage = () => {
 
                   {/* Ресурсы */}
                   <Accordion defaultExpanded
-                    sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', '&:before': { display: 'none' } }}>
+                    sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Ресурсы</Typography>
                     </AccordionSummary>
@@ -770,7 +770,7 @@ export const JobNewPage = () => {
                   </Accordion>
 
                   {/* Планирование */}
-                  <Accordion sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', '&:before': { display: 'none' } }}>
+                  <Accordion sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Планирование</Typography>
                     </AccordionSummary>
@@ -809,7 +809,7 @@ export const JobNewPage = () => {
 
                   {/* Исполнение */}
                   <Accordion defaultExpanded
-                    sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', '&:before': { display: 'none' } }}>
+                    sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' } }}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Исполнение</Typography>
                     </AccordionSummary>
@@ -836,7 +836,7 @@ export const JobNewPage = () => {
 
                         {/* Загрузка исполняемого файла */}
                         <Grid item xs={12}>
-                          <Divider sx={{ borderColor: '#2d3748', my: 0.5 }} />
+                          <Divider sx={{ my: 0.5 }} />
                           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
                             Загрузить исполняемый файл в хранилище
                           </Typography>
@@ -860,7 +860,7 @@ export const JobNewPage = () => {
 
                         {/* Скрипт */}
                         <Grid item xs={12}>
-                          <Divider sx={{ borderColor: '#2d3748', my: 0.5 }} />
+                          <Divider sx={{ my: 0.5 }} />
                           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                               Команды для выполнения
@@ -896,12 +896,12 @@ export const JobNewPage = () => {
                 </Box>
               ) : (
                 /* Preview скрипта */
-                <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', p: 2 }}>
+                <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', p: 2 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 1 }}>
                     Итоговый batch-скрипт, который будет передан в sbatch:
                   </Typography>
-                  <Box sx={{ bgcolor: '#0d1117', borderRadius: 1, p: 1.5, overflowX: 'auto' }}>
-                    <Typography component="pre" sx={{ fontFamily: 'monospace', fontSize: 12, m: 0, color: '#e6edf3', whiteSpace: 'pre-wrap' }}>
+                  <Box sx={{ bgcolor: (t) => t.palette.mode === 'dark' ? '#0d1117' : '#f8fafc', borderRadius: 1, p: 1.5, overflowX: 'auto' }}>
+                    <Typography component="pre" sx={{ fontFamily: 'monospace', fontSize: 12, m: 0, color: 'text.primary', whiteSpace: 'pre-wrap' }}>
                       {previewScript}
                     </Typography>
                   </Box>
@@ -910,7 +910,7 @@ export const JobNewPage = () => {
             </>
           ) : (
             /* Режим Bash-скрипт */
-            <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', p: 2 }}>
+            <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', p: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="subtitle2" sx={{ color: 'text.secondary' }}>
                   Bash-скрипт (включая #SBATCH директивы)
@@ -949,7 +949,7 @@ export const JobNewPage = () => {
 
         {/* Правая часть — шаблоны */}
         <Grid item xs={12} md={4}>
-          <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', p: 2, position: 'sticky', top: 80 }}>
+          <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', p: 2, position: 'sticky', top: 80 }}>
             <TemplatePanel onApply={applyTemplate} currentParams={params} mode={mode} username={username} />
           </Paper>
         </Grid>

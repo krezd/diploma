@@ -91,7 +91,7 @@ const toRelativePath = (path: string | undefined): string | null => {
 // ─── StatCard ────────────────────────────────────────────────────────────────
 
 const StatCard = ({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) => (
-  <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, height: '100%' }}>
+  <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
     <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}>
       {label}
     </Typography>
@@ -103,7 +103,7 @@ const StatCard = ({ label, value, sub, color }: { label: string; value: string |
 // ─── InfoRow helper ──────────────────────────────────────────────────────────
 
 const InfoRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <Box sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #2d374840' }}>
+  <Box sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
     <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 160, flexShrink: 0 }}>{label}</Typography>
     <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>{value ?? '—'}</Typography>
   </Box>
@@ -156,8 +156,8 @@ const ActiveJobDialog = ({ job, onClose, onCancel, onUpdate }: ActiveJobDialogPr
 
   return (
     <Dialog open onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid #2d3748' }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>#{job.job_id} — {job.name ?? '—'}</Typography>
           <Chip label={(job.job_state ?? []).join('+')} size="small"
@@ -224,11 +224,11 @@ const ActiveJobDialog = ({ job, onClose, onCancel, onUpdate }: ActiveJobDialogPr
             <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, display: 'block', mt: 2, mb: 1 }}>
               Файлы
             </Typography>
-            <Box sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #2d374840' }}>
+            <Box sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
               <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 160, flexShrink: 0 }}>Stdout</Typography>
               <FileLink path={job.standard_output} isAdmin={false} />
             </Box>
-            <Box sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid #2d374840' }}>
+            <Box sx={{ display: 'flex', py: 0.75, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
               <Typography variant="caption" sx={{ color: 'text.secondary', minWidth: 160, flexShrink: 0 }}>Stderr</Typography>
               <FileLink path={job.standard_error} isAdmin={false} />
             </Box>
@@ -238,7 +238,7 @@ const ActiveJobDialog = ({ job, onClose, onCancel, onUpdate }: ActiveJobDialogPr
 
           {(job.exit_code || job.derived_exit_code) && (
             <Grid item xs={12}>
-              <Divider sx={{ borderColor: '#2d3748', mb: 1.5 }} />
+              <Divider sx={{ mb: 1.5 }} />
               <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, display: 'block', mb: 1 }}>
                 Завершение
               </Typography>
@@ -254,7 +254,7 @@ const ActiveJobDialog = ({ job, onClose, onCancel, onUpdate }: ActiveJobDialogPr
 
           {(job.dependency || job.features || job.comment) && (
             <Grid item xs={12}>
-              <Divider sx={{ borderColor: '#2d3748', mb: 1.5 }} />
+              <Divider sx={{ mb: 1.5 }} />
               <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, display: 'block', mb: 1 }}>
                 Дополнительно
               </Typography>
@@ -288,8 +288,8 @@ const HistoryJobDialog = ({ job, onClose }: HistoryJobDialogProps) => {
 
   return (
     <Dialog open onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid #2d3748' }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" sx={{ fontWeight: 700 }}>#{job.job_id} — {job.name ?? '—'}</Typography>
           <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5, flexWrap: 'wrap' }}>
@@ -347,13 +347,13 @@ const HistoryJobDialog = ({ job, onClose }: HistoryJobDialogProps) => {
 
           {(job.steps ?? []).length > 0 && (
             <Grid item xs={12}>
-              <Divider sx={{ borderColor: '#2d3748', mb: 1.5 }} />
+              <Divider sx={{ mb: 1.5 }} />
               <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontWeight: 600, display: 'block', mb: 1 }}>
                 Шаги ({job.steps!.length})
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {job.steps!.map((step, i) => (
-                  <Paper key={i} sx={{ p: 1.5, bgcolor: '#151b2d', border: '1px solid #2d3748', borderRadius: 1 }}>
+                  <Paper key={i} sx={{ p: 1.5, bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                     <Typography variant="caption" sx={{ fontFamily: 'monospace', fontWeight: 600 }}>
                       {step.step?.name ?? step.step?.id ?? `Step ${i}`}
                     </Typography>
@@ -379,13 +379,13 @@ const CancelDialog = ({ job, onClose, onConfirm, loading }: {
   if (!job) return null;
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Отмена задания #{job.job_id}
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2 }}>
         <Alert severity="warning" sx={{ mt: 1 }}>Задание «{job.name}» будет отменено. Это действие необратимо.</Alert>
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} disabled={loading} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button variant="contained" color="error" disabled={loading}
           onClick={() => job.job_id !== undefined && onConfirm(job.job_id)}>
@@ -416,10 +416,10 @@ const UpdateDialog = ({ job, onClose, onConfirm, loading }: {
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Обновление задания #{job.job_id}
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField label="Новый лимит времени (мин)" type="number" value={timeLimit}
           onChange={(e) => setTimeLimit(e.target.value)} size="small"
           placeholder={`Текущий: ${fmtMinutes(job.time_limit)}`} fullWidth sx={{ mt: 1 }} />
@@ -427,7 +427,7 @@ const UpdateDialog = ({ job, onClose, onConfirm, loading }: {
           onChange={(e) => setNice(e.target.value)} size="small"
           placeholder={`Текущий: ${job.priority?.number ?? '—'}`} fullWidth />
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} disabled={loading} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button variant="contained" disabled={loading || (!timeLimit && !nice)} onClick={handleConfirm}>
           {loading ? <CircularProgress size={18} /> : 'Сохранить'}
@@ -440,12 +440,12 @@ const UpdateDialog = ({ job, onClose, onConfirm, loading }: {
 // ─── Table helpers ────────────────────────────────────────────────────────────
 
 const TABLE_HEAD_SX = {
-  '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.6 },
+  '& th': { bgcolor: (t: { palette: { mode: string } }) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: 0.6 },
 };
 const TABLE_ROW_SX = {
-  '& td': { borderColor: '#2d3748', py: 1 },
+  '& td': { borderColor: 'divider', py: 1 },
   cursor: 'pointer',
-  '&:hover': { bgcolor: 'rgba(255,255,255,0.025)' },
+  '&:hover': { bgcolor: 'action.hover' },
 };
 
 type SortDir = 'asc' | 'desc';
@@ -568,7 +568,7 @@ const ActiveJobsTab = ({ isAdmin }: { isAdmin: boolean }) => {
         </Tooltip>
       </Box>
 
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
             <TableRow sx={TABLE_HEAD_SX}>
@@ -737,7 +737,7 @@ const HistoryJobsTab = ({ isAdmin }: { isAdmin: boolean }) => {
         </Tooltip>
       </Box>
 
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
             <TableRow sx={TABLE_HEAD_SX}>
@@ -793,7 +793,7 @@ const HistoryJobsTab = ({ isAdmin }: { isAdmin: boolean }) => {
         rowsPerPageOptions={[10, 25, 50, 100]}
         labelRowsPerPage="Строк на странице:"
         labelDisplayedRows={({ from, to, count }) => `${from}–${to} из ${count}`}
-        sx={{ color: 'text.secondary', borderTop: '1px solid #2d3748' }}
+        sx={{ color: 'text.secondary', borderTop: '1px solid', borderTopColor: 'divider' }}
       />
 
       <HistoryJobDialog job={selectedJob} isAdmin={isAdmin} onClose={() => setSelectedJob(null)} />
@@ -846,7 +846,7 @@ const UsageTab = ({ isAdmin }: { isAdmin: boolean }) => {
       <Typography variant="subtitle2" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 12, mb: 1.5 }}>
         Задания по статусам
       </Typography>
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
             <TableRow sx={TABLE_HEAD_SX}>
@@ -859,10 +859,10 @@ const UsageTab = ({ isAdmin }: { isAdmin: boolean }) => {
             {Object.entries((data.jobs_by_status ?? {}) as Record<string, number>)
               .sort(([, a], [, b]) => b - a)
               .map(([status, count]) => (
-                <TableRow key={status} sx={{ '& td': { borderColor: '#2d3748', py: 1 } }}>
+                <TableRow key={status} sx={{ '& td': { borderColor: 'divider', py: 1 } }}>
                   <TableCell>
                     <Chip label={status} size="small" variant="outlined"
-                      sx={{ fontSize: 11, height: 22, fontFamily: 'monospace', color: statusColors[status] ?? 'text.secondary', borderColor: statusColors[status] ?? '#2d3748' }} />
+                      sx={{ fontSize: 11, height: 22, fontFamily: 'monospace', color: statusColors[status] ?? 'text.secondary', borderColor: statusColors[status] ?? 'divider' }} />
                   </TableCell>
                   <TableCell align="right"><Typography variant="body2" sx={{ fontWeight: 600 }}>{count}</Typography></TableCell>
                   <TableCell align="right">
@@ -898,7 +898,7 @@ export const JobsPage = () => {
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button variant="outlined" onClick={() => navigate('/jobs/templates')}
-            sx={{ color: 'text.secondary', borderColor: '#2d3748' }}>
+            sx={{ color: 'text.secondary', borderColor: 'divider' }}>
             Шаблоны
           </Button>
           <Button variant="contained" startIcon={<SendIcon />} onClick={() => navigate('/jobs/new')}>
@@ -907,7 +907,7 @@ export const JobsPage = () => {
         </Box>
       </Box>
 
-      <Box sx={{ borderBottom: '1px solid #2d3748', mb: 2 }}>
+      <Box sx={{ borderBottom: '1px solid', borderBottomColor: 'divider', mb: 2 }}>
         <Tabs value={tab} onChange={(_, v: number) => setTab(v)} sx={{
           '& .MuiTab-root': { color: 'text.secondary', textTransform: 'none', fontSize: 14 },
           '& .Mui-selected': { color: 'primary.main' },

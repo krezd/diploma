@@ -103,7 +103,7 @@ const LimitRow = ({ label, value, infinite = false }: { label: string; value: st
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.35 }}>
       <Typography variant="caption" sx={{ color: 'text.secondary' }}>{label}</Typography>
-      <Typography variant="caption" sx={{ fontWeight: 600, color: isInf ? '#4ade80' : 'text.primary' }}>
+      <Typography variant="caption" sx={{ fontWeight: 600, color: isInf ? 'success.main' : 'text.primary' }}>
         {isInf ? '∞' : display}
       </Typography>
     </Box>
@@ -141,7 +141,8 @@ const UserAssocTab = ({ associations }: { associations: SlurmAssociation[] }) =>
         return (
           <Box key={`${account ?? ''}-${i}`} sx={{
             mb: 1.5, pb: 1.5,
-            borderBottom: i < associations.length - 1 ? '1px solid #2d3748' : 'none',
+            borderBottom: i < associations.length - 1 ? '1px solid' : 'none',
+            borderBottomColor: i < associations.length - 1 ? 'divider' : undefined,
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
               <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: 'monospace' }}>
@@ -149,19 +150,19 @@ const UserAssocTab = ({ associations }: { associations: SlurmAssociation[] }) =>
               </Typography>
               {defQos?.qos && (
                 <Chip label={`QOS: ${defQos.qos}`} size="small"
-                  sx={{ fontSize: 10, height: 18, bgcolor: '#1e2844', color: '#60a5fa' }} />
+                  sx={{ fontSize: 10, height: 18, bgcolor: 'rgba(59,130,246,0.15)', color: 'primary.main' }} />
               )}
             </Box>
             {(qos?.length ?? 0) > 0 && (
               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75 }}>
                 {qos!.map((q) => (
                   <Chip key={q} label={q} size="small" variant="outlined"
-                    sx={{ fontSize: 10, height: 18, borderColor: '#2d3748', color: 'text.secondary' }} />
+                    sx={{ fontSize: 10, height: 18, borderColor: 'divider', color: 'text.secondary' }} />
                 ))}
               </Box>
             )}
             {!limits ? (
-              <Typography variant="caption" sx={{ color: '#4ade80' }}>Лимиты не установлены</Typography>
+              <Typography variant="caption" sx={{ color: 'success.main' }}>Лимиты не установлены</Typography>
             ) : (
               <>
                 <LimitRow label="Макс. заданий" value={limits.maxJobs ?? limits.grpJobs} />
@@ -172,7 +173,7 @@ const UserAssocTab = ({ associations }: { associations: SlurmAssociation[] }) =>
                 {limits.fairshare != null && limits.fairshare > 0 && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Fairshare</Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#f59e0b' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'warning.main' }}>
                       {limits.fairshare}
                     </Typography>
                   </Box>
@@ -199,7 +200,8 @@ const AccountAssocTab = ({ associations }: { associations: SlurmAssociation[] })
         return (
           <Box key={`${account ?? ''}-${i}`} sx={{
             mb: 1.5, pb: 1.5,
-            borderBottom: i < associations.length - 1 ? '1px solid #2d3748' : 'none',
+            borderBottom: i < associations.length - 1 ? '1px solid' : 'none',
+            borderBottomColor: i < associations.length - 1 ? 'divider' : undefined,
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
               <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: 'monospace' }}>
@@ -207,19 +209,19 @@ const AccountAssocTab = ({ associations }: { associations: SlurmAssociation[] })
               </Typography>
               {defQos?.qos && (
                 <Chip label={`QOS: ${defQos.qos}`} size="small"
-                  sx={{ fontSize: 10, height: 18, bgcolor: '#1e2844', color: '#60a5fa' }} />
+                  sx={{ fontSize: 10, height: 18, bgcolor: 'rgba(59,130,246,0.15)', color: 'primary.main' }} />
               )}
             </Box>
             {(qos?.length ?? 0) > 0 && (
               <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 0.75 }}>
                 {qos!.map((q) => (
                   <Chip key={q} label={q} size="small" variant="outlined"
-                    sx={{ fontSize: 10, height: 18, borderColor: '#2d3748', color: 'text.secondary' }} />
+                    sx={{ fontSize: 10, height: 18, borderColor: 'divider', color: 'text.secondary' }} />
                 ))}
               </Box>
             )}
             {!limits ? (
-              <Typography variant="caption" sx={{ color: '#4ade80' }}>Лимиты не установлены</Typography>
+              <Typography variant="caption" sx={{ color: 'success.main' }}>Лимиты не установлены</Typography>
             ) : (
               <>
                 <LimitRow label="Задания (группа)" value={limits.grpJobs} />
@@ -247,14 +249,15 @@ const QosTab = ({ qosList, defaultQosNames }: { qosList: SlurmQos[]; defaultQosN
       {qosList.map((qos, i) => (
         <Box key={qos.name} sx={{
           mb: 1.5, pb: 1.5,
-          borderBottom: i < qosList.length - 1 ? '1px solid #2d3748' : 'none',
+          borderBottom: i < qosList.length - 1 ? '1px solid' : 'none',
+          borderBottomColor: i < qosList.length - 1 ? 'divider' : undefined,
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.75 }}>
             <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.primary', fontFamily: 'monospace' }}>
               {qos.name}
             </Typography>
             {defaultQosNames.has(qos.name) && (
-              <Chip label="default" size="small" sx={{ fontSize: 10, height: 18, bgcolor: '#1e3a1e', color: '#4ade80' }} />
+              <Chip label="default" size="small" sx={{ fontSize: 10, height: 18, bgcolor: 'rgba(16,185,129,0.15)', color: 'success.main' }} />
             )}
             {qos.priority != null && qos.priority > 0 && (
               <Typography variant="caption" sx={{ color: 'text.secondary', ml: 'auto' }}>
@@ -295,10 +298,10 @@ const MetricCard = ({ label, value, sub, color, icon, onClick }: MetricCardProps
   <Paper
     onClick={onClick}
     sx={{
-      p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2,
+      p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2,
       cursor: onClick ? 'pointer' : 'default',
       transition: 'border-color 0.15s, background-color 0.15s',
-      '&:hover': onClick ? { borderColor: '#3b82f6', bgcolor: '#1e2844' } : undefined,
+      '&:hover': onClick ? { borderColor: 'primary.main', bgcolor: (t) => t.palette.mode === 'dark' ? '#1e2844' : 'rgba(59,130,246,0.04)' } : undefined,
       height: '100%',
     }}
   >
@@ -335,23 +338,23 @@ const NodeStatusBar = ({ total, idle, allocated, down }: NodeStatusBarProps) => 
     <Box>
       <Box sx={{ display: 'flex', height: 8, borderRadius: 4, overflow: 'hidden', mb: 1 }}>
         <Tooltip title={`Используется: ${allocated}`}>
-          <Box sx={{ width: `${(allocated / total) * 100}%`, bgcolor: '#22c55e' }} />
+          <Box sx={{ width: `${(allocated / total) * 100}%`, bgcolor: 'success.main' }} />
         </Tooltip>
         <Tooltip title={`Свободно: ${idle}`}>
-          <Box sx={{ width: `${(idle / total) * 100}%`, bgcolor: '#3b82f6' }} />
+          <Box sx={{ width: `${(idle / total) * 100}%`, bgcolor: 'primary.main' }} />
         </Tooltip>
         <Tooltip title={`Недоступно: ${down}`}>
-          <Box sx={{ width: `${(down / total) * 100}%`, bgcolor: '#ef4444' }} />
+          <Box sx={{ width: `${(down / total) * 100}%`, bgcolor: 'error.main' }} />
         </Tooltip>
         <Tooltip title={`Другое: ${other}`}>
-          <Box sx={{ width: `${(other / total) * 100}%`, bgcolor: '#4a5568' }} />
+          <Box sx={{ width: `${(other / total) * 100}%`, bgcolor: 'text.disabled' }} />
         </Tooltip>
       </Box>
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         {[
-          { label: 'Используется', count: allocated, color: '#22c55e' },
-          { label: 'Свободно', count: idle, color: '#3b82f6' },
-          { label: 'Недоступно', count: down, color: '#ef4444' },
+          { label: 'Используется', count: allocated, color: 'success.main' },
+          { label: 'Свободно', count: idle, color: 'primary.main' },
+          { label: 'Недоступно', count: down, color: 'error.main' },
         ].map(({ label, count, color }) => count > 0 ? (
           <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color }} />
@@ -533,8 +536,8 @@ export const DashboardPage = () => {
         <Grid item xs={12} lg={8}>
 
           {/* Активные задания */}
-          <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, mb: 2 }}>
-            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #2d3748' }}>
+          <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2 }}>
+            <Box sx={{ p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                 Активные задания
               </Typography>
@@ -556,7 +559,7 @@ export const DashboardPage = () => {
             ) : (
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, borderColor: '#2d3748' } }}>
+                  <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, borderColor: 'divider' } }}>
                     <TableCell>ID</TableCell>
                     <TableCell>Имя</TableCell>
                     <TableCell>Статус</TableCell>
@@ -567,7 +570,7 @@ export const DashboardPage = () => {
                 </TableHead>
                 <TableBody>
                   {topJobs.map((job) => (
-                    <TableRow key={job.job_id} sx={{ '& td': { borderColor: '#2d3748', py: 0.75 } }}>
+                    <TableRow key={job.job_id} sx={{ '& td': { borderColor: 'divider', py: 0.75 } }}>
                       <TableCell>
                         <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
                           {job.job_id}
@@ -611,8 +614,8 @@ export const DashboardPage = () => {
 
           {/* Статусы из истории */}
           {!usageLoading && statusEntries.length > 0 && (
-            <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2 }}>
-              <Box sx={{ p: 2, borderBottom: '1px solid #2d3748' }}>
+            <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+              <Box sx={{ p: 2, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                   Статистика за 30 дней
                 </Typography>
@@ -626,7 +629,7 @@ export const DashboardPage = () => {
                     { label: 'Ср. ожидание', value: fmtSeconds(usageData?.avg_wait_time_seconds ?? 0), icon: <AccessTimeIcon sx={{ fontSize: 16 }} /> },
                   ].map(({ label, value, icon }) => (
                     <Grid item xs={6} sm={3} key={label}>
-                      <Box sx={{ p: 1.5, bgcolor: '#151b2d', borderRadius: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ p: 1.5, bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', borderRadius: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ color: 'text.secondary' }}>{icon}</Box>
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1 }}>{value}</Typography>
@@ -637,7 +640,7 @@ export const DashboardPage = () => {
                   ))}
                 </Grid>
 
-                <Divider sx={{ borderColor: '#2d3748', mb: 2 }} />
+                <Divider sx={{ mb: 2 }} />
 
                 {statusEntries.map(([status, count]) => (
                   <Box key={status} sx={{ mb: 1.5 }}>
@@ -654,7 +657,7 @@ export const DashboardPage = () => {
                       variant="determinate"
                       value={usageData?.total_jobs ? (count / usageData.total_jobs) * 100 : 0}
                       sx={{
-                        height: 4, borderRadius: 2, bgcolor: '#2d3748',
+                        height: 4, borderRadius: 2,
                         '& .MuiLinearProgress-bar': { bgcolor: statusColors[status] ?? '#6b7280', borderRadius: 2 },
                       }}
                     />
@@ -668,8 +671,8 @@ export const DashboardPage = () => {
         {/* Правый блок */}
         <Grid item xs={12} lg={4}>
           {/* Состояние узлов */}
-          <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, mb: 2 }}>
-            <Box sx={{ p: 2, borderBottom: '1px solid #2d3748' }}>
+          <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2 }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Узлы кластера</Typography>
             </Box>
             <Box sx={{ p: 2 }}>
@@ -682,16 +685,16 @@ export const DashboardPage = () => {
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>{nodeMetrics.total}</Typography>
                   </Box>
                   <NodeStatusBar {...nodeMetrics} />
-                  <Divider sx={{ borderColor: '#2d3748', my: 1.5 }} />
+                  <Divider sx={{ my: 1.5 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="caption" sx={{ color: 'text.secondary' }}>Загрузка</Typography>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#22c55e' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'success.main' }}>
                       {nodeMetrics.total > 0 ? Math.round((nodeMetrics.allocated / nodeMetrics.total) * 100) : 0}%
                     </Typography>
                   </Box>
                 </>
               )}
-              <Button fullWidth variant="outlined" size="small" sx={{ mt: 2, borderColor: '#2d3748', color: 'text.secondary' }}
+              <Button fullWidth variant="outlined" size="small" sx={{ mt: 2, borderColor: 'divider', color: 'text.secondary' }}
                 onClick={() => navigate('/cluster')}>
                 Подробнее →
               </Button>
@@ -700,8 +703,8 @@ export const DashboardPage = () => {
 
           {/* Ресурсные лимиты */}
           {hasLimitsData && (
-            <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, mb: 2 }}>
-              <Box sx={{ px: 2, pt: 2, pb: 0, display: 'flex', alignItems: 'center', gap: 1, borderBottom: '1px solid #2d3748' }}>
+            <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2 }}>
+              <Box sx={{ px: 2, pt: 2, pb: 0, display: 'flex', alignItems: 'center', gap: 1, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
                 <LockIcon sx={{ fontSize: 15, color: 'text.secondary', mb: 1 }} />
                 <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Ресурсные лимиты</Typography>
               </Box>
@@ -710,7 +713,8 @@ export const DashboardPage = () => {
                 onChange={(_, v: number) => setLimitsTab(v)}
                 sx={{
                   minHeight: 36,
-                  borderBottom: '1px solid #2d3748',
+                  borderBottom: '1px solid',
+                  borderBottomColor: 'divider',
                   '& .MuiTab-root': { fontSize: 11, minHeight: 36, py: 0.5, textTransform: 'none', color: 'text.secondary' },
                   '& .Mui-selected': { color: 'primary.main' },
                   '& .MuiTabs-indicator': { bgcolor: 'primary.main' },
@@ -729,8 +733,8 @@ export const DashboardPage = () => {
           )}
 
           {/* Быстрые действия */}
-          <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, mb: 2 }}>
-            <Box sx={{ p: 2, borderBottom: '1px solid #2d3748' }}>
+          <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2 }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid', borderBottomColor: 'divider' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Быстрые действия</Typography>
             </Box>
             <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -742,7 +746,7 @@ export const DashboardPage = () => {
                 <Button key={label} variant={variant} size="small" startIcon={icon}
                   onClick={() => navigate(path)}
                   fullWidth
-                  sx={{ justifyContent: 'flex-start', borderColor: variant === 'outlined' ? '#2d3748' : undefined, color: variant === 'outlined' ? 'text.secondary' : undefined }}>
+                  sx={{ justifyContent: 'flex-start', borderColor: variant === 'outlined' ? 'divider' : undefined, color: variant === 'outlined' ? 'text.secondary' : undefined }}>
                   {label}
                 </Button>
               ))}
@@ -751,16 +755,16 @@ export const DashboardPage = () => {
 
           {/* Ошибки и предупреждения */}
           {(usageData?.failed_with_non_zero_exit ?? 0) > 0 && (
-            <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #ef444440', borderRadius: 2 }}>
+            <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'error.main', borderRadius: 2, opacity: 0.85 }}>
               <Box sx={{ p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                  <ErrorOutlineIcon sx={{ color: '#ef4444', fontSize: 20 }} />
-                  <Typography variant="subtitle2" sx={{ color: '#ef4444' }}>Внимание</Typography>
+                  <ErrorOutlineIcon sx={{ color: 'error.main', fontSize: 20 }} />
+                  <Typography variant="subtitle2" sx={{ color: 'error.main' }}>Внимание</Typography>
                 </Box>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   {usageData?.failed_with_non_zero_exit} заданий завершились с ненулевым кодом ошибки за последние 30 дней.
                 </Typography>
-                <Button size="small" variant="text" sx={{ color: '#ef4444', mt: 1, p: 0 }}
+                <Button size="small" variant="text" sx={{ color: 'error.main', mt: 1, p: 0 }}
                   onClick={() => navigate('/jobs')}>
                   Посмотреть историю →
                 </Button>

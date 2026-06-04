@@ -190,12 +190,12 @@ const FileViewerDialog = ({ file, isAdmin, onClose, onDownload }: FileViewerDial
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748', maxHeight: '92vh', display: 'flex', flexDirection: 'column' } }}
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', maxHeight: '92vh', display: 'flex', flexDirection: 'column' } }}
     >
       <DialogTitle
         sx={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          borderBottom: '1px solid #2d3748', py: 1.5, px: 2, flexShrink: 0,
+          borderBottom: '1px solid', borderBottomColor: 'divider', py: 1.5, px: 2, flexShrink: 0,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
@@ -272,8 +272,8 @@ const FileViewerDialog = ({ file, isAdmin, onClose, onDownload }: FileViewerDial
               lineHeight: 1.65,
               overflow: 'auto',
               flex: 1,
-              bgcolor: '#0d1117',
-              color: '#e6edf3',
+              bgcolor: (t) => t.palette.mode === 'dark' ? '#0d1117' : '#f8fafc',
+              color: 'text.primary',
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-all',
             }}
@@ -283,7 +283,7 @@ const FileViewerDialog = ({ file, isAdmin, onClose, onDownload }: FileViewerDial
         )}
 
         {blobUrl && (
-          <Box sx={{ overflow: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: '#0d1117' }}>
+          <Box sx={{ overflow: 'auto', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2, bgcolor: (t) => t.palette.mode === 'dark' ? '#0d1117' : '#f8fafc' }}>
             <img
               src={blobUrl}
               alt={file.fileName}
@@ -500,12 +500,12 @@ export const FilesPage = () => {
         Файлы
       </Typography>
 
-      <Paper sx={{ border: '1px solid #2d3748', borderRadius: 2 }}>
+      <Paper sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
         {/* Шапка: breadcrumb + toolbar */}
         <Box
           sx={{
             px: 2, py: 1.5,
-            borderBottom: '1px solid #2d3748',
+            borderBottom: '1px solid', borderBottomColor: 'divider',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             flexWrap: 'wrap', gap: 1,
           }}
@@ -723,7 +723,7 @@ export const FilesPage = () => {
                           size="small"
                           label={isFile ? 'Файл' : 'Папка'}
                           variant="outlined"
-                          sx={{ fontSize: 11, height: 20, borderColor: '#2d3748', color: 'text.secondary' }}
+                          sx={{ fontSize: 11, height: 20, borderColor: 'divider', color: 'text.secondary' }}
                         />
                       </TableCell>
                       <TableCell>

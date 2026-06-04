@@ -100,7 +100,7 @@ export const ProfilePage = () => {
       {profile && (
         <>
           {/* ── Информация о профиле ─────────────────────────────────────── */}
-          <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, p: 3, mb: 3 }}>
+          <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 3, mb: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
               <AccountCircleIcon sx={{ color: 'primary.main' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
@@ -130,7 +130,7 @@ export const ProfilePage = () => {
                 </Typography>
               </Box>
 
-              <Divider sx={{ borderColor: '#2d3748' }} />
+              <Divider />
 
               {nameSuccess && (
                 <Alert severity="success" onClose={() => setNameSuccess(false)}>
@@ -164,7 +164,7 @@ export const ProfilePage = () => {
           </Paper>
 
           {/* ── Смена пароля ─────────────────────────────────────────────── */}
-          <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, p: 3 }}>
+          <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5 }}>
               <LockIcon sx={{ color: 'text.secondary' }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>

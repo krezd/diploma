@@ -117,7 +117,7 @@ export const LoginPage = () => {
           </Typography>
         </Box>
 
-        <Card sx={{ bgcolor: 'background.paper', border: '1px solid #2d3748' }}>
+        <Card sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
           <CardContent sx={{ p: 0 }}>
             {statusLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>

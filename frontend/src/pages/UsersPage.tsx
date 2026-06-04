@@ -97,10 +97,10 @@ const CreateUserDialog = ({ open, onClose, onSave, loading, error, accounts }: C
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Создать пользователя
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         <TextField
           label="Отображаемое имя"
@@ -153,7 +153,7 @@ const CreateUserDialog = ({ open, onClose, onSave, loading, error, accounts }: C
           </Select>
         </FormControl>
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={handleClose} disabled={loading} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button
           variant="contained"
@@ -216,10 +216,10 @@ const EditUserDialog = ({ user, onClose, onSave, loading, error, accounts, userA
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Редактировать: {user.username}
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         <TextField
           label="Отображаемое имя"
@@ -246,7 +246,7 @@ const EditUserDialog = ({ user, onClose, onSave, loading, error, accounts, userA
         />
 
         {/* ─── SLURM-ассоциации ─────────────────────────────────────────── */}
-        <Box sx={{ border: '1px solid #2d3748', borderRadius: 1, p: 1.5, position: 'relative', overflow: 'hidden' }}>
+        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5, position: 'relative', overflow: 'hidden' }}>
           {removeAssocMutation.isPending && (
             <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0 }} />
           )}
@@ -308,7 +308,7 @@ const EditUserDialog = ({ user, onClose, onSave, loading, error, accounts, userA
           )}
         </Box>
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} disabled={loading} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button
           variant="contained"
@@ -335,16 +335,16 @@ const DeleteUserDialog = ({ user, onClose, onConfirm, loading }: DeleteUserDialo
   if (!user) return null;
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Удалить пользователя
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2 }}>
         <Alert severity="warning" sx={{ mt: 1 }}>
           Вы уверены, что хотите удалить пользователя <strong>{user.username}</strong>?
           Это действие удалит Linux-аккаунт и рабочую директорию.
         </Alert>
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} disabled={loading} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button
           variant="contained"
@@ -379,10 +379,10 @@ const CreateAccountDialog = ({ open, onClose, onSave, loading, error }: CreateAc
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         Создать аккаунт SLURM
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
         {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
         <TextField
           label="Название"
@@ -404,7 +404,7 @@ const CreateAccountDialog = ({ open, onClose, onSave, loading, error }: CreateAc
           fullWidth size="small"
         />
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={handleClose} disabled={loading} sx={{ color: 'text.secondary' }}>Отмена</Button>
         <Button
           variant="contained"
@@ -472,10 +472,10 @@ const AccountsTab = () => {
       {isError && <Alert severity="error">Ошибка загрузки аккаунтов SLURM</Alert>}
 
       {!isLoading && !isError && (
-        <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+        <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+              <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
                 <TableCell>Название</TableCell>
                 <TableCell>Описание</TableCell>
                 <TableCell>Организация</TableCell>
@@ -486,7 +486,7 @@ const AccountsTab = () => {
               {accounts.map((account) => (
                 <TableRow
                   key={account.name}
-                  sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}
+                  sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <TableCell>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
@@ -631,7 +631,7 @@ const UsersTab = () => {
           {regLoading
             ? <CircularProgress size={18} />
             : (
-              <Paper sx={{ px: 2, py: 1, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2 }}>
+              <Paper sx={{ px: 2, py: 1, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -663,10 +663,10 @@ const UsersTab = () => {
       {isError && <Alert severity="error">Ошибка загрузки пользователей</Alert>}
 
       {!isLoading && !isError && (
-        <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+        <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
           <Table size="small">
             <TableHead>
-              <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+              <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
                 <TableCell>Пользователь</TableCell>
                 <TableCell>Имя</TableCell>
                 <TableCell>Роль</TableCell>
@@ -681,7 +681,7 @@ const UsersTab = () => {
                 return (
                   <TableRow
                     key={user.id}
-                    sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}
+                    sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}
                   >
                     <TableCell>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
@@ -814,7 +814,7 @@ export const UsersPage = () => {
         value={tab}
         onChange={(_, v: number) => setTab(v)}
         sx={{
-          borderBottom: '1px solid #2d3748',
+          borderBottom: '1px solid', borderBottomColor: 'divider',
           '& .MuiTab-root': { textTransform: 'none', fontSize: 14 },
         }}
       >

@@ -25,6 +25,8 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import PeopleIcon from '@mui/icons-material/People';
 import AppsIcon from '@mui/icons-material/Apps';
 import ViewListIcon from '@mui/icons-material/ViewList';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useAuthStore } from '@/stores/authStore';
 import { useUiStore } from '@/stores/uiStore';
 import { authApi } from '@/services/api/authApi';
@@ -59,7 +61,7 @@ export const Sidebar = () => {
   const user = useAuthStore((s) => s.user);
   const refreshToken = useAuthStore((s) => s.refreshToken);
   const logout = useAuthStore((s) => s.logout);
-  const { sidebarCollapsed, toggleSidebar } = useUiStore();
+  const { sidebarCollapsed, toggleSidebar, themeMode, toggleTheme } = useUiStore();
   const [profileOpen, setProfileOpen] = useState(false);
 
   const userRole = user?.role ?? 'REGULAR';
@@ -85,8 +87,9 @@ export const Sidebar = () => {
           width,
           transition: 'width 0.2s ease',
           boxSizing: 'border-box',
-          bgcolor: '#151b2d',
-          borderRight: '1px solid #2d3748',
+          bgcolor: (theme) => theme.palette.mode === 'dark' ? '#151b2d' : '#f8fafc',
+          borderRight: '1px solid',
+          borderRightColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -145,7 +148,7 @@ export const Sidebar = () => {
                   color: isActive ? 'primary.main' : 'text.secondary',
                   bgcolor: isActive ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
                   '&:hover': {
-                    bgcolor: isActive ? 'rgba(59, 130, 246, 0.16)' : 'rgba(255, 255, 255, 0.05)',
+                    bgcolor: isActive ? 'rgba(59, 130, 246, 0.16)' : 'action.hover',
                     color: isActive ? 'primary.main' : 'text.primary',
                   },
                 }}
@@ -172,7 +175,7 @@ export const Sidebar = () => {
       </List>
 
       {/* Пользователь + выход */}
-      <Box sx={{ p: sidebarCollapsed ? 1 : 2, borderTop: '1px solid #2d3748' }}>
+      <Box sx={{ p: sidebarCollapsed ? 1 : 2, borderTop: '1px solid', borderTopColor: 'divider' }}>
         {!sidebarCollapsed ? (
           <>
             <Tooltip title="Настройки профиля" placement="right">
@@ -188,7 +191,7 @@ export const Sidebar = () => {
                   px: 0.5,
                   py: 0.5,
                   mx: -0.5,
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' },
+                  '&:hover': { bgcolor: 'action.hover' },
                   transition: 'background-color 0.15s',
                 }}
               >
@@ -205,21 +208,32 @@ export const Sidebar = () => {
                 </Box>
               </Box>
             </Tooltip>
-            <Button
-              fullWidth
-              variant="outlined"
-              size="small"
-              startIcon={<LogoutIcon fontSize="small" />}
-              onClick={() => void handleLogout()}
-              sx={{
-                borderColor: '#2d3748',
-                color: 'text.secondary',
-                fontSize: 13,
-                '&:hover': { borderColor: '#4a5568', color: 'text.primary', bgcolor: 'rgba(255,255,255,0.05)' },
-              }}
-            >
-              Выйти
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="small"
+                startIcon={<LogoutIcon fontSize="small" />}
+                onClick={() => void handleLogout()}
+                sx={{
+                  borderColor: 'divider',
+                  color: 'text.secondary',
+                  fontSize: 13,
+                  '&:hover': { borderColor: 'divider', color: 'text.primary', bgcolor: 'action.hover' },
+                }}
+              >
+                Выйти
+              </Button>
+              <Tooltip title={themeMode === 'dark' ? 'Светлая тема' : 'Тёмная тема'} placement="right">
+                <IconButton
+                  size="small"
+                  onClick={toggleTheme}
+                  sx={{ color: 'text.secondary', flexShrink: 0, '&:hover': { color: 'text.primary' } }}
+                >
+                  {themeMode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+            </Box>
           </>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
@@ -239,6 +253,11 @@ export const Sidebar = () => {
               >
                 {user?.username?.charAt(0).toUpperCase() ?? '?'}
               </Avatar>
+            </Tooltip>
+            <Tooltip title={themeMode === 'dark' ? 'Светлая тема' : 'Тёмная тема'} placement="right">
+              <IconButton size="small" onClick={toggleTheme} sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}>
+                {themeMode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+              </IconButton>
             </Tooltip>
             <Tooltip title="Выйти" placement="right">
               <IconButton size="small" onClick={() => void handleLogout()} sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>

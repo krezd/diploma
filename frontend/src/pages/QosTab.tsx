@@ -133,12 +133,12 @@ function buildLimitsParts(limits: AssocLimits): string[] {
 
 // ─── Стили ───────────────────────────────────────────────────────────────────
 
-const cellSx = { py: 0.75, px: 1.5, color: 'rgba(255,255,255,0.85)', borderColor: 'rgba(255,255,255,0.08)' };
-const rowHoverSx = { '&:hover': { bgcolor: 'rgba(255,255,255,0.04)' } };
-const headSx = { bgcolor: '#0f172a', color: 'rgba(255,255,255,0.55)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1, px: 1.5, borderColor: 'rgba(255,255,255,0.08)' };
-const paperSx = { bgcolor: '#1a2035', borderRadius: 2, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' };
-const dialogSx = { '& .MuiDialog-paper': { bgcolor: '#1a2035', minWidth: 560, maxWidth: 780 } };
-const accordionSx = { bgcolor: '#111827', border: '1px solid rgba(255,255,255,0.08)', '&:before': { display: 'none' }, mb: 1 };
+const cellSx = { py: 0.75, px: 1.5, color: 'text.primary', borderColor: 'divider' };
+const rowHoverSx = { '&:hover': { bgcolor: 'action.hover' } };
+const headSx = { bgcolor: (t: { palette: { mode: string } }) => t.palette.mode === 'dark' ? '#0f172a' : '#f1f5f9', color: 'text.secondary', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', py: 1, px: 1.5, borderColor: 'divider' };
+const paperSx = { bgcolor: 'background.paper', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider' };
+const dialogSx = { '& .MuiDialog-paper': { bgcolor: 'background.paper', minWidth: 560, maxWidth: 780 } };
+const accordionSx = { bgcolor: (t: { palette: { mode: string } }) => t.palette.mode === 'dark' ? '#111827' : '#f8fafc', border: '1px solid', borderColor: 'divider', '&:before': { display: 'none' }, mb: 1 };
 
 // ─── QosFormState ────────────────────────────────────────────────────────────
 
@@ -300,11 +300,11 @@ const PARAM_DOCS = [
 
 function HelpDialog({ onClose }: { onClose: () => void }) {
   return (
-    <Dialog open onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: '#1a2035', maxWidth: 680, width: '100%', maxHeight: '80vh' } }}>
-      <DialogTitle sx={{ color: 'rgba(255,255,255,0.9)', pb: 1 }}>
+    <Dialog open onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: 'background.paper', maxWidth: 680, width: '100%', maxHeight: '80vh' } }}>
+      <DialogTitle sx={{ pb: 1 }}>
         Справка по параметрам QOS
       </DialogTitle>
-      <DialogContent dividers sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+      <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Значение <strong>-1</strong> означает «без ограничений» (UNLIMITED).
           Пустое поле — параметр не изменяется.
@@ -318,7 +318,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
                   <Typography variant="subtitle2" color="primary.light" sx={{ fontWeight: 700 }}>
                     {item.section}
                   </Typography>
-                  <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mt: 0.5 }} />
+                  <Divider sx={{ mt: 0.5 }} />
                 </Box>
               );
             }
@@ -326,7 +326,7 @@ function HelpDialog({ onClose }: { onClose: () => void }) {
             return (
               <ListItem key={i} disableGutters sx={{ py: 0.5, alignItems: 'flex-start' }}>
                 <ListItemText
-                  primary={<Typography variant="body2" sx={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{doc.name}</Typography>}
+                  primary={<Typography variant="body2" sx={{ fontWeight: 600 }}>{doc.name}</Typography>}
                   secondary={<Typography variant="caption" color="text.secondary">{doc.desc}</Typography>}
                 />
               </ListItem>
@@ -531,7 +531,7 @@ function CreateQosDialog({ onClose, tresCatalog }: { onClose: () => void; tresCa
 
   return (
     <Dialog open onClose={onClose} sx={dialogSx}>
-      <DialogTitle sx={{ color: 'rgba(255,255,255,0.9)' }}>Создать QOS</DialogTitle>
+      <DialogTitle>Создать QOS</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
         <QosFormSections
@@ -570,7 +570,7 @@ function EditQosDialog({ qos, onClose, tresCatalog }: { qos: SlurmQos; onClose: 
 
   return (
     <Dialog open onClose={onClose} sx={dialogSx}>
-      <DialogTitle sx={{ color: 'rgba(255,255,255,0.9)' }}>Изменить QOS: {qos.name}</DialogTitle>
+      <DialogTitle>Изменить QOS: {qos.name}</DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
         <QosFormSections
@@ -602,15 +602,15 @@ function DeleteQosDialog({ qos, onClose }: { qos: SlurmQos; onClose: () => void 
   });
 
   return (
-    <Dialog open onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: '#1a2035', minWidth: 400 } }}>
-      <DialogTitle sx={{ color: 'rgba(255,255,255,0.9)' }}>Удалить QOS</DialogTitle>
+    <Dialog open onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: 'background.paper', minWidth: 400 } }}>
+      <DialogTitle>Удалить QOS</DialogTitle>
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Alert severity="warning" sx={{ mb: 2 }}>
           Все задания, использующие QOS <strong>{qos.name}</strong>, потеряют доступ к нему.
         </Alert>
         <Typography color="text.secondary">
-          Удалить QOS <strong style={{ color: '#fff' }}>{qos.name}</strong>?
+          Удалить QOS <strong>{qos.name}</strong>?
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -656,8 +656,8 @@ function SetAssocQosDialog({
   const qosNames = availableQos.map((q) => q.name);
 
   return (
-    <Dialog open onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: '#1a2035', minWidth: 480 } }}>
-      <DialogTitle sx={{ color: 'rgba(255,255,255,0.9)' }}>
+    <Dialog open onClose={onClose} sx={{ '& .MuiDialog-paper': { bgcolor: 'background.paper', minWidth: 480 } }}>
+      <DialogTitle>
         Назначить QOS — {isAccountLevel ? `аккаунт ${assoc.account}` : `${assoc.user}@${assoc.account}`}
       </DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
@@ -805,7 +805,7 @@ function SetAssocLimitsDialog({
 
   return (
     <Dialog open onClose={onClose} sx={dialogSx}>
-      <DialogTitle sx={{ color: 'rgba(255,255,255,0.9)' }}>
+      <DialogTitle>
         Личные лимиты — {assoc.user}@{assoc.account}
       </DialogTitle>
       <DialogContent sx={{ pt: 2 }}>
@@ -907,12 +907,12 @@ export default function QosTab() {
     <Box>
       {/* ── QOS Table ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+        <Typography variant="h6">
           Quality of Service (QOS)
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Обновить">
-            <IconButton size="small" onClick={() => refetchQos()} sx={{ color: 'rgba(255,255,255,0.6)' }}>
+            <IconButton size="small" onClick={() => refetchQos()} sx={{ color: 'text.secondary' }}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>
@@ -939,7 +939,7 @@ export default function QosTab() {
             <TableBody>
               {qosList.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ ...cellSx, py: 3, color: 'rgba(255,255,255,0.4)' }}>
+                  <TableCell colSpan={8} align="center" sx={{ ...cellSx, py: 3, color: 'text.disabled' }}>
                     QOS не найдены
                   </TableCell>
                 </TableRow>
@@ -969,7 +969,7 @@ export default function QosTab() {
                     <TableCell sx={cellSx}>{fmtWall(q.maxWallDurationPerJobMinutes)}</TableCell>
                     <TableCell sx={cellSx}>
                       <Tooltip title="Изменить">
-                        <IconButton size="small" onClick={() => setEditQos(q)} sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                        <IconButton size="small" onClick={() => setEditQos(q)} sx={{ color: 'text.secondary' }}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
@@ -989,11 +989,11 @@ export default function QosTab() {
 
       {/* ── Associations ── */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+        <Typography variant="h6">
           Ассоциации
         </Typography>
         <Tooltip title="Обновить">
-          <IconButton size="small" onClick={() => refetchAssoc()} sx={{ color: 'rgba(255,255,255,0.6)' }}>
+          <IconButton size="small" onClick={() => refetchAssoc()} sx={{ color: 'text.secondary' }}>
             <RefreshIcon />
           </IconButton>
         </Tooltip>
@@ -1003,7 +1003,7 @@ export default function QosTab() {
         <Tabs
           value={assocTab}
           onChange={(_, v) => setAssocTab(v)}
-          sx={{ '& .MuiTab-root': { color: 'rgba(255,255,255,0.5)', minHeight: 36, py: 0.5 }, '& .Mui-selected': { color: 'rgba(255,255,255,0.9)' } }}
+          sx={{ '& .MuiTab-root': { color: 'text.secondary', minHeight: 36, py: 0.5 }, '& .Mui-selected': { color: 'primary.main' } }}
         >
           <Tab label={`Аккаунты (${accountAssociations.length})`} />
           <Tab label={`Пользователи (${userAssociations.length})`} />
@@ -1011,12 +1011,12 @@ export default function QosTab() {
       </Box>
 
       {assocTab === 0 && (
-        <Alert severity="info" variant="outlined" sx={{ mb: 1, borderColor: 'rgba(100,180,255,0.3)', color: 'rgba(255,255,255,0.7)' }}>
+        <Alert severity="info" variant="outlined" sx={{ mb: 1 }}>
           Ассоциации аккаунтов определяют доступные QOS для всего аккаунта. Назначить QOS можно через кнопку <PlaylistAddCheckIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} />.
         </Alert>
       )}
       {assocTab === 1 && (
-        <Alert severity="info" variant="outlined" sx={{ mb: 1, borderColor: 'rgba(100,255,180,0.3)', color: 'rgba(255,255,255,0.7)' }}>
+        <Alert severity="success" variant="outlined" sx={{ mb: 1 }}>
           Личные лимиты пользователя устанавливаются через <TuneIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /> — действуют только для конкретного пользователя в рамках аккаунта.
         </Alert>
       )}
@@ -1043,7 +1043,7 @@ export default function QosTab() {
             <TableBody>
               {displayedAssociations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ ...cellSx, py: 3, color: 'rgba(255,255,255,0.4)' }}>
+                  <TableCell colSpan={6} align="center" sx={{ ...cellSx, py: 3, color: 'text.disabled' }}>
                     Ассоциации не найдены
                   </TableCell>
                 </TableRow>
@@ -1086,13 +1086,13 @@ export default function QosTab() {
                     )}
                     <TableCell sx={cellSx}>
                       <Tooltip title="Назначить QOS">
-                        <IconButton size="small" onClick={() => setSetQosAssoc(assoc)} sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                        <IconButton size="small" onClick={() => setSetQosAssoc(assoc)} sx={{ color: 'text.secondary' }}>
                           <PlaylistAddCheckIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
                       {assocTab === 1 && (
                         <Tooltip title="Установить личные лимиты">
-                          <IconButton size="small" onClick={() => setSetLimitsAssoc(assoc)} sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                          <IconButton size="small" onClick={() => setSetLimitsAssoc(assoc)} sx={{ color: 'text.secondary' }}>
                             <TuneIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>

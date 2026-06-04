@@ -79,8 +79,8 @@ const EditDialog = ({ template, open, onClose, onSave, loading }: EditDialogProp
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
-      <DialogTitle sx={{ borderBottom: '1px solid #2d3748' }}>Редактирование шаблона</DialogTitle>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
+      <DialogTitle sx={{ borderBottom: '1px solid', borderBottomColor: 'divider' }}>Редактирование шаблона</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={6}>
@@ -128,7 +128,7 @@ const DeleteConfirmDialog = ({ template, onClose, onConfirm, loading }: {
   if (!template) return null;
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth
-      PaperProps={{ sx: { bgcolor: '#1a2035', border: '1px solid #2d3748' } }}>
+      PaperProps={{ sx: { bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' } }}>
       <DialogTitle>Удалить шаблон?</DialogTitle>
       <DialogContent>
         <Alert severity="warning">Шаблон «{template.name}» будет удалён. Это действие необратимо.</Alert>
@@ -164,7 +164,7 @@ const TemplateCard = ({ template, isOwner, onApply, onEdit, onDelete, onDuplicat
   };
 
   return (
-    <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1.5 }}>
         <BookmarkIcon sx={{ color: modeColor, mr: 1, mt: 0.25, flexShrink: 0 }} />
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -185,14 +185,14 @@ const TemplateCard = ({ template, isOwner, onApply, onEdit, onDelete, onDuplicat
         <Chip
           icon={template.isPublic ? <PublicIcon sx={{ fontSize: '14px !important' }} /> : <LockIcon sx={{ fontSize: '14px !important' }} />}
           label={template.isPublic ? 'Публичный' : 'Личный'} size="small" variant="outlined"
-          sx={{ fontSize: 11, height: 20, color: 'text.secondary', borderColor: '#2d3748' }} />
+          sx={{ fontSize: 11, height: 20, color: 'text.secondary', borderColor: 'divider' }} />
       </Box>
 
-      <Divider sx={{ borderColor: '#2d3748', mb: 1.5 }} />
+      <Divider sx={{ mb: 1.5 }} />
 
       <Box sx={{ flex: 1 }}>
         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-          Автор: <span style={{ color: '#90caf9' }}>{template.username}</span>
+          Автор: <span style={{ color: 'inherit' }}>{template.username}</span>
         </Typography>
         <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
           Создан: {fmtDate(template.createdAt)}
@@ -314,7 +314,7 @@ export const JobTemplatesPage = () => {
               Мои шаблоны ({myTemplates.length})
             </Typography>
             {myTemplates.length === 0 ? (
-              <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, p: 4, textAlign: 'center' }}>
+              <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 4, textAlign: 'center' }}>
                 <BookmarkIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Нет сохранённых шаблонов. Создайте задание и сохраните его как шаблон.
@@ -344,7 +344,7 @@ export const JobTemplatesPage = () => {
           {/* Публичные шаблоны */}
           {publicTemplates.length > 0 && (
             <Box>
-              <Divider sx={{ borderColor: '#2d3748', mb: 3 }} />
+              <Divider sx={{ mb: 3 }} />
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 12 }}>
                 Публичные шаблоны ({publicTemplates.length})
               </Typography>

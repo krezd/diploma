@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Box, CircularProgress } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import axios from 'axios';
-import { theme } from '@/theme/theme';
+import { createAppTheme } from '@/theme/theme';
 import { useAuthStore } from '@/stores/authStore';
+import { useUiStore } from '@/stores/uiStore';
 import { API_ENDPOINTS } from '@/services/api/endpoints';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -73,6 +74,9 @@ const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  const themeMode = useUiStore((s) => s.themeMode);
+  const theme = useMemo(() => createAppTheme(themeMode), [themeMode]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>

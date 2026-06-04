@@ -112,7 +112,7 @@ export const ProfileDialog = ({ open, onClose }: Props) => {
       {/* ── Заголовок: аватар + имя + роль + вкладки ───────────────────────── */}
       <DialogTitle
         component="div"
-        sx={{ bgcolor: '#151b2d', pb: 0, borderBottom: '1px solid #2d3748' }}
+        sx={{ bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', pb: 0, borderBottom: '1px solid', borderBottomColor: 'divider' }}
       >
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
           {isLoading ? (
@@ -168,7 +168,7 @@ export const ProfileDialog = ({ open, onClose }: Props) => {
         </Tabs>
       </DialogTitle>
 
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2.5, pb: 3 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2.5, pb: 3 }}>
         {/* ── Вкладка «Профиль» ──────────────────────────────────────────────── */}
         {tab === 0 && !isLoading && profile && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -190,7 +190,7 @@ export const ProfileDialog = ({ open, onClose }: Props) => {
               </Typography>
             </Box>
 
-            <Divider sx={{ borderColor: '#2d3748' }} />
+            <Divider />
 
             {nameSuccess && (
               <Alert severity="success" sx={{ py: 0.5 }} onClose={() => setNameSuccess(false)}>

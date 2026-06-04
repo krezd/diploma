@@ -92,8 +92,9 @@ const StatCard = ({ label, value, sub, color }: StatCardProps) => (
   <Paper
     sx={{
       p: 2.5,
-      bgcolor: '#1a2035',
-      border: '1px solid #2d3748',
+      bgcolor: 'background.paper',
+      border: '1px solid',
+      borderColor: 'divider',
       borderRadius: 2,
       height: '100%',
     }}
@@ -141,10 +142,10 @@ const NodeActionDialog = ({ node, action, onClose, onConfirm, loading }: NodeAct
 
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ bgcolor: '#1a2035', borderBottom: '1px solid #2d3748' }}>
+      <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderBottomColor: 'divider' }}>
         {actionLabels[action]}: {node.name}
       </DialogTitle>
-      <DialogContent sx={{ bgcolor: '#1a2035', pt: 2 }}>
+      <DialogContent sx={{ bgcolor: 'background.paper', pt: 2 }}>
         {action !== 'RESUME' && (
           <TextField
             fullWidth
@@ -167,7 +168,7 @@ const NodeActionDialog = ({ node, action, onClose, onConfirm, loading }: NodeAct
           </Alert>
         )}
       </DialogContent>
-      <DialogActions sx={{ bgcolor: '#1a2035', borderTop: '1px solid #2d3748', px: 2, pb: 2 }}>
+      <DialogActions sx={{ bgcolor: 'background.paper', borderTop: '1px solid', borderTopColor: 'divider', px: 2, pb: 2 }}>
         <Button onClick={onClose} disabled={loading} sx={{ color: 'text.secondary' }}>
           Отмена
         </Button>
@@ -227,10 +228,10 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
         </Tooltip>
       </Box>
 
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+            <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
               <TableCell>Узел</TableCell>
               <TableCell>Статус</TableCell>
               <TableCell>Партиции</TableCell>
@@ -253,7 +254,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
               return (
                 <TableRow
                   key={node.name}
-                  sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}
+                  sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <TableCell>
                     <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
@@ -284,7 +285,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
                       <LinearProgress
                         variant="determinate"
                         value={pct(cpuUsed, cpuTotal)}
-                        sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: stateColor === 'success' ? '#3b82f6' : stateColor === 'warning' ? '#f59e0b' : '#ef4444' } }}
+                        sx={{ flex: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: stateColor === 'success' ? 'primary.main' : stateColor === 'warning' ? 'warning.main' : 'error.main' } }}
                       />
                       <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', minWidth: 50 }}>
                         {cpuUsed}/{cpuTotal}
@@ -296,7 +297,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
                       <LinearProgress
                         variant="determinate"
                         value={pct(memUsed, memTotal)}
-                        sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#8b5cf6' } }}
+                        sx={{ flex: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: 'secondary.main' } }}
                       />
                       <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', minWidth: 90 }}>
                         {formatMemory(memUsed)}/{formatMemory(memTotal)}
@@ -313,7 +314,7 @@ const NodesTab = ({ isAdmin }: NodesTabProps) => {
                             <LinearProgress
                               variant="determinate"
                               value={pct(gpuUsed ?? 0, gpuTotal)}
-                              sx={{ flex: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#f59e0b' } }}
+                              sx={{ flex: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: 'warning.main' } }}
                             />
                             <Typography variant="caption" sx={{ color: 'text.secondary', whiteSpace: 'nowrap', minWidth: 36 }}>
                               {gpuUsed ?? 0}/{gpuTotal}
@@ -422,10 +423,10 @@ const PartitionsTab = () => {
           </IconButton>
         </Tooltip>
       </Box>
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+            <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
               <TableCell>Партиция</TableCell>
               <TableCell>Статус</TableCell>
               <TableCell>Узлы</TableCell>
@@ -444,7 +445,7 @@ const PartitionsTab = () => {
               return (
                 <TableRow
                   key={p.name}
-                  sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}
+                  sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}
                 >
                   <TableCell>
                     <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
@@ -548,8 +549,8 @@ const DiagnosticsTab = () => {
               sx={{
                 px: 2,
                 py: 1.5,
-                bgcolor: '#1a2035',
-                border: `1px solid ${p.pinged === 'UP' ? '#22c55e44' : '#ef444444'}`,
+                bgcolor: 'background.paper',
+                border: `1px solid ${p.pinged === 'UP' ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.4)'}`,
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
@@ -570,7 +571,7 @@ const DiagnosticsTab = () => {
         </Box>
       )}
 
-      <Divider sx={{ my: 2, borderColor: '#2d3748' }} />
+      <Divider sx={{ my: 2 }} />
 
       {/* Статистика планировщика */}
       <Typography variant="subtitle2" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 12, mb: 1.5 }}>
@@ -599,7 +600,7 @@ const DiagnosticsTab = () => {
           {(stats.schedule_cycle_last !== undefined || stats.schedule_cycle_mean !== undefined) && (
             <>
               <Grid item xs={12}>
-                <Divider sx={{ borderColor: '#2d3748' }} />
+                <Divider />
                 <Typography variant="subtitle2" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8, fontSize: 12, mt: 2, mb: 1.5 }}>
                   Цикл планирования
                 </Typography>
@@ -659,10 +660,10 @@ const ConfigTab = () => {
 
       {/* ── Кластеры ────────────────────────────────────────────────────── */}
       <SectionHeader title="Кластеры" />
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden', mb: 3 }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden', mb: 3 }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+            <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
               <TableCell>Имя</TableCell>
               <TableCell>Контроллер</TableCell>
               <TableCell>Версия RPC</TableCell>
@@ -672,7 +673,7 @@ const ConfigTab = () => {
           </TableHead>
           <TableBody>
             {clusters.map((c) => (
-              <TableRow key={c.name} sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+              <TableRow key={c.name} sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}>
                 <TableCell>
                   <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
                     {c.name ?? '—'}
@@ -714,10 +715,10 @@ const ConfigTab = () => {
 
       {/* ── TRES ────────────────────────────────────────────────────────── */}
       <SectionHeader title="Trackable Resources (TRES)" />
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden', mb: 3 }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden', mb: 3 }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+            <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
               <TableCell>ID</TableCell>
               <TableCell>Тип</TableCell>
               <TableCell>Имя</TableCell>
@@ -725,7 +726,7 @@ const ConfigTab = () => {
           </TableHead>
           <TableBody>
             {tres.map((t, i) => (
-              <TableRow key={i} sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+              <TableRow key={i} sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}>
                 <TableCell>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>{t.id ?? '—'}</Typography>
                 </TableCell>
@@ -746,10 +747,10 @@ const ConfigTab = () => {
 
       {/* ── QOS ─────────────────────────────────────────────────────────── */}
       <SectionHeader title="Quality of Service (QOS)" />
-      <Paper sx={{ bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ '& th': { bgcolor: '#151b2d', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
+            <TableRow sx={{ '& th': { bgcolor: (t) => t.palette.mode === 'dark' ? '#151b2d' : '#f1f5f9', color: 'text.secondary', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.6 } }}>
               <TableCell>ID</TableCell>
               <TableCell>Имя</TableCell>
               <TableCell>Описание</TableCell>
@@ -759,7 +760,7 @@ const ConfigTab = () => {
           </TableHead>
           <TableBody>
             {qos.map((q) => (
-              <TableRow key={q.id ?? q.name} sx={{ '& td': { borderColor: '#2d3748', py: 1 }, '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' } }}>
+              <TableRow key={q.id ?? q.name} sx={{ '& td': { borderColor: 'divider', py: 1 }, '&:hover': { bgcolor: 'action.hover' } }}>
                 <TableCell>
                   <Typography variant="body2" sx={{ color: 'text.secondary' }}>{q.id ?? '—'}</Typography>
                 </TableCell>
@@ -839,52 +840,53 @@ export const ClusterPage = () => {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           {nodesLoading
-            ? <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
+            ? <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
             : <StatCard label="Узлов всего" value={nodes.length} sub={`Idle: ${idleNodes} · Drain: ${drainNodes} · Down: ${downNodes}`} />}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           {nodesLoading
-            ? <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
+            ? <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
             : (
-              <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2 }}>
+              <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}>CPU</Typography>
                 <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 700 }}>{allocCpus} <Typography component="span" variant="h6" sx={{ color: 'text.secondary', fontWeight: 400 }}>/ {totalCpus}</Typography></Typography>
-                <LinearProgress variant="determinate" value={pct(allocCpus, totalCpus)} sx={{ mt: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#3b82f6' } }} />
+                <LinearProgress variant="determinate" value={pct(allocCpus, totalCpus)} sx={{ mt: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: 'primary.main' } }} />
               </Paper>
             )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           {nodesLoading
-            ? <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
+            ? <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
             : (
-              <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2 }}>
+              <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}>Память</Typography>
                 <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 700 }}>{formatMemory(allocMem)} <Typography component="span" variant="h6" sx={{ color: 'text.secondary', fontWeight: 400 }}>/ {formatMemory(totalMem)}</Typography></Typography>
-                <LinearProgress variant="determinate" value={pct(allocMem, totalMem)} sx={{ mt: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#8b5cf6' } }} />
+                <LinearProgress variant="determinate" value={pct(allocMem, totalMem)} sx={{ mt: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: 'secondary.main' } }} />
               </Paper>
             )}
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           {nodesLoading
-            ? <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
+            ? <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
             : <StatCard
                 label="Загрузка CPU"
                 value={`${pct(allocCpus, totalCpus)}%`}
                 sub={`Свободно: ${totalCpus - allocCpus} ядер`}
                 color={pct(allocCpus, totalCpus) > 80 ? '#f59e0b' : undefined}
+
               />}
         </Grid>
         {hasClusterGpu && (
           <Grid item xs={12} sm={6} md={3}>
             {nodesLoading
-              ? <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
+              ? <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2, display: 'flex', justifyContent: 'center' }}><CircularProgress size={24} /></Paper>
               : (
-                <Paper sx={{ p: 2.5, bgcolor: '#1a2035', border: '1px solid #2d3748', borderRadius: 2 }}>
+                <Paper sx={{ p: 2.5, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                   <Typography variant="caption" sx={{ color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.8 }}>GPU</Typography>
-                  <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 700, color: '#f59e0b' }}>
+                  <Typography variant="h4" sx={{ mt: 0.5, fontWeight: 700, color: 'warning.main' }}>
                     {usedGpu} <Typography component="span" variant="h6" sx={{ color: 'text.secondary', fontWeight: 400 }}>/ {totalGpu}</Typography>
                   </Typography>
-                  <LinearProgress variant="determinate" value={pct(usedGpu, totalGpu)} sx={{ mt: 1, height: 6, borderRadius: 3, bgcolor: '#2d3748', '& .MuiLinearProgress-bar': { bgcolor: '#f59e0b' } }} />
+                  <LinearProgress variant="determinate" value={pct(usedGpu, totalGpu)} sx={{ mt: 1, height: 6, borderRadius: 3, '& .MuiLinearProgress-bar': { bgcolor: 'warning.main' } }} />
                 </Paper>
               )}
           </Grid>
@@ -892,7 +894,7 @@ export const ClusterPage = () => {
       </Grid>
 
       {/* Вкладки */}
-      <Box sx={{ borderBottom: '1px solid #2d3748', mb: 2 }}>
+      <Box sx={{ borderBottom: '1px solid', borderBottomColor: 'divider', mb: 2 }}>
         <Tabs
           value={tab}
           onChange={(_, v: number) => setTab(v)}
