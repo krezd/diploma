@@ -16,9 +16,8 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -175,6 +174,7 @@ public class FilesService
         try (InputStream in = file.getInputStream())
         {
             Files.copy(in, targetFile, StandardCopyOption.REPLACE_EXISTING);
+            setExecutablePermissionIfNeeded(targetFile, file.getOriginalFilename());
         }
     }
 
@@ -413,5 +413,82 @@ public class FilesService
                 // клиент отменил загрузку
             }
         };
+    }
+
+    /**
+     * Устанавливает права на выполнение для файла, если это исполняемый файл.
+     * Определяет по расширению или по magic number (первые байты файла).
+     */
+    private void setExecutablePermissionIfNeeded(Path filePath, String fileName) throws IOException
+    {
+        if (isExecutableFile(fileName, filePath))
+        {
+            // Устанавливаем права: rwxr-xr-x (755)
+            // Владелец может читать, писать, выполнять
+            // Группа и остальные могут читать и выполнять
+            Set<PosixFilePermission> permissions = new HashSet<>();
+            permissions.add(PosixFilePermission.OWNER_READ);
+            permissions.add(PosixFilePermission.OWNER_WRITE);
+            permissions.add(PosixFilePermission.OWNER_EXECUTE);
+            permissions.add(PosixFilePermission.GROUP_READ);
+            permissions.add(PosixFilePermission.GROUP_EXECUTE);
+            permissions.add(PosixFilePermission.OTHERS_READ);
+            permissions.add(PosixFilePermission.OTHERS_EXECUTE);
+
+            Files.setPosixFilePermissions(filePath, permissions);
+            log.info("Set executable permission for: {}", filePath);
+        }
+    }
+
+    /**
+     * Определяет, является ли файл исполняемым.
+     * Проверяет по расширению и по первым байтам (ELF, shebang).
+     */
+    private boolean isExecutableFile(String fileName, Path filePath) throws IOException
+    {
+        // 1. Проверка по расширению
+        if (fileName != null)
+        {
+            String lowerName = fileName.toLowerCase();
+            if (lowerName.endsWith(".sh") ||      // shell скрипты
+                    lowerName.endsWith(".py") ||      // python скрипты
+                    lowerName.endsWith(".pl") ||      // perl скрипты
+                    lowerName.endsWith(".rb") ||      // ruby скрипты
+                    lowerName.endsWith(".bin") ||     // бинарники
+                    lowerName.endsWith(".exe") ||     // windows executables
+                    !fileName.contains("."))          // файлы без расширения (часто бинарники)
+            {
+                return true;
+            }
+        }
+
+        // 2. Проверка magic number для ELF (Linux executables)
+        // ELF файлы начинаются с 0x7F 0x45 0x4C 0x46
+        try (InputStream in = Files.newInputStream(filePath))
+        {
+            byte[] magic = new byte[4];
+            int bytesRead = in.read(magic);
+            if (bytesRead >= 4)
+            {
+                // ELF magic number
+                if (magic[0] == 0x7F && magic[1] == 0x45 &&
+                        magic[2] == 0x4C && magic[3] == 0x46)
+                {
+                    return true;
+                }
+
+                // Shebang #!
+                if (magic[0] == '#' && magic[1] == '!')
+                {
+                    return true;
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            log.debug("Could not read magic number from: {}", filePath, e);
+        }
+
+        return false;
     }
 }
